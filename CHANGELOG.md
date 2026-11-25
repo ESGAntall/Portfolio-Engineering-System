@@ -8,7 +8,7 @@ All notable changes to **portfolio-engineering-system** (meta repo).
 
 - `cli/` — `create`, `verify`, `doctor`, `info`, `help`; marker `.portfolio-root`; manifest `.portfolio/manifest.json` (schema v1).
 - C-02 contract: canonical `docs/reference/` only (no duplicate policy in `project-template/`); scaffold `project-context.md` stays in template.
-- Tests: `cli/test/run-tests.js` (19 cases, temp dirs only).
+- Tests: `cli/test/run-tests.js` (29 cases, temp dirs only).
 
 ### Changed (C-01 portability)
 

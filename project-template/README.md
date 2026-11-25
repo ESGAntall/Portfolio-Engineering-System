@@ -52,7 +52,7 @@ CLI copy template + rules 00–30 + skills + canonical `docs/reference/` (policy
 
 ## Portfolio
 
-Rules/skills copied from portfolio-engineering-system (ghi commit/tag portfolio đã copy).
+Bootstrapped via Portfolio Local CLI (O-001 COPY). Ghi `cliVersion` / thời điểm trong `.portfolio/manifest.json` — không cần mở meta repo để làm việc hàng ngày.
 ```
 
 ## Không làm khi chỉ copy template

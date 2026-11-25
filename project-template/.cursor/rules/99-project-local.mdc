@@ -10,9 +10,17 @@ alwaysApply: false
 - Lệnh verify: `docs/testing/README.md`
 - Convention local: _(điền)_
 
-## Rules portfolio
+## Rules portfolio (bootstrap)
 
-Khi bootstrap: copy rules 00–30 và distributable skills từ portfolio meta repo (O-001, **không** rule 90, **không** `portfolio-design-system`). Sau đó làm việc chỉ cần repo app + `docs/reference/`.
+Bootstrap **khuyến nghị (CLI-first):** chạy `node cli/bin/portfolio.js create <name>` trong **portfolio meta repo** (chi tiết: `cli/README.md` tại meta repo lúc bootstrap).
+
+- CLI copy rules **00–30**, skills distributable, và `docs/reference/` vào repo app (O-001).
+- **Không** copy rule `90-portfolio-meta-local` hay skill `portfolio-design-system`.
+- Sau bootstrap: làm việc chỉ cần repo app này + `.portfolio/manifest.json`.
+
+## Rule 99 — local only
+
+File này **chỉ thuộc app repo**. O-001: sync tương lai (nếu có) **không ghi đè** `99-project-local.mdc` — điền stack, lệnh verify, globs UI bên dưới.
 
 ## UI globs bổ sung (rule 20)
 

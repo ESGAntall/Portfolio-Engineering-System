@@ -28,9 +28,10 @@ Chỉ kích hoạt khi workspace là **portfolio-engineering-system** (xem rule 
 
 1. Gap analysis vs `portfolio/design-principles.md`.
 2. Layering: must / should / product-only.
-3. Cập nhật portfolio doc + reference snapshots + template stubs.
-4. Adoption note cho app repos (không ép deadline).
-5. Thay đổi "must" → user approve.
+3. Cập nhật `portfolio/design-principles.md`; đối chiếu **§1–§6** từng section với `docs/reference/design-principles.md` (semantic parity, portable paths, không đưa meta-only vào snapshot).
+4. Cập nhật template stubs khi cần (không duplicate policy ref trong template).
+5. Adoption note cho app repos (không ép deadline); **không** sửa repo app đã bootstrap trừ khi user yêu cầu.
+6. Thay đổi "must" → user approve.
 
 ## Output
 

@@ -30,4 +30,4 @@
 
 ## 6. Preserve capability
 
-- Redesign: **không bỏ** workflow đã ship trừ khi `docs/product/` ghi deprecation.
+- Redesign tuân baseline trong file này và rule `00-portfolio-baseline.mdc`: **không bỏ** workflow đã ship trừ khi `docs/product/` ghi deprecation.

@@ -5,7 +5,7 @@ Lớp **bắt buộc tối thiểu** cho mọi app. Art direction, màu thương
 ## 1. Clarity
 
 - Một màn hình có **một primary action** rõ ràng.
-- Nhãn và message lỗi nói thẳng nguyên nhân hoặc bước khắc phục, tránh mã nội bộ với end user.
+- Nhãn và message lỗi nói thẳng nguyên nhân hoặc bước khắc phục; tránh mã nội bộ với end user.
 
 ## 2. Accessible by default
 
@@ -25,12 +25,12 @@ Lớp **bắt buộc tối thiểu** cho mọi app. Art direction, màu thương
 
 ## 5. Density & responsive
 
-- Nội dung đọc được trên viewport nhỏ nhất mà product hỗ trợ (ghi trong product doc).
+- Nội dung đọc được trên viewport nhỏ nhất mà product hỗ trợ (ghi trong `docs/product/` của từng app).
 - Không ẩn chức năng critical chỉ vì breakpoint nếu không có path thay thế.
 
 ## 6. Preserve capability
 
-- Redesign tuân rule portfolio: **không bỏ** workflow đã ship trừ khi product doc ghi deprecation.
+- Redesign tuân baseline portfolio (rules 00, 20 và file reference tương ứng trong app): **không bỏ** workflow đã ship trừ khi `docs/product/` ghi deprecation.
 
 ## Áp dụng trong Cursor
 

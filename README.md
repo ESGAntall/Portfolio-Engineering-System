@@ -43,12 +43,22 @@ Meta-repository: AI engineering workflow, Cursor Rules, Cursor Skills, chuẩn v
 
 ## Rules
 
+### Phân phối cho application repos (CLI copy)
+
 | Rule | alwaysApply | Ghi chú |
 |------|-------------|---------|
 | `00-portfolio-baseline.mdc` | yes | |
 | `10-workflow-and-approval.mdc` | yes | O-003; trigger quality-gate khi done/ship |
 | `20-ui-ux-system.mdc` | no | UI source globs + design-system docs |
 | `30-quality-gates.mdc` | no | Glob: test docs, TS/JS/Vue/Svelte/Python, tests, e2e, GitHub workflows (xem rule file) |
+
+Cộng **`99-project-local.mdc`** (template stub — project-local, không bị sync ghi đè).
+
+### Chỉ portfolio meta repo (không phân phối)
+
+| Rule | alwaysApply | Ghi chú |
+|------|-------------|---------|
+| `90-portfolio-meta-local.mdc` | no | Registry, ADR gốc, meta quality gate, sync `docs/reference/`; **không** có trong app repo sau `create` |
 
 ## Changelog
 

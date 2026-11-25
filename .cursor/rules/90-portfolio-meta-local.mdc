@@ -17,7 +17,11 @@ Rule này **chỉ** áp dụng khi workspace là **portfolio-engineering-system*
 ## Skills chỉ meta
 
 - `portfolio-design-system` — **không** phân phối cho child projects (D-02).
-- Khi sửa `portfolio/design-principles.md` → đồng bộ snapshot `docs/reference/design-principles.md` (CLI copy sang app khi `create`).
+- Khi sửa `portfolio/design-principles.md` → **đồng bộ thủ công** snapshot `docs/reference/design-principles.md`:
+  - Đối chiếu §1–§6: **cùng ý nghĩa và cường độ bắt buộc** (semantic parity).
+  - Giữ wording project-facing và path portable trong snapshot (`docs/product/`, `docs/design-system/`).
+  - **Không** copy § “Áp dụng trong Cursor” hoặc tham chiếu `portfolio-design-system` vào snapshot.
+  - **Không** auto-sync; app đã bootstrap không bị CLI cập nhật (O-001 COPY v0.1).
 
 ## Quality gate (meta)
 
