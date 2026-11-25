@@ -1,0 +1,31 @@
+---
+description: Hybrid UI/UX — chuẩn portfolio + art direction product; áp dụng khi chỉnh source UI, design tokens, hoặc docs design-system.
+globs: "**/*.tsx,**/*.jsx,**/*.vue,**/*.svelte,**/*.css,**/*.scss,**/docs/design-system/**"
+alwaysApply: false
+---
+
+# UI/UX System
+
+## Hai lớp
+
+1. **Portfolio layer**: accessibility, hierarchy, feedback, error states, responsive baseline — `portfolio/design-principles.md`.
+2. **Product layer**: art direction, brand, motion, density — `docs/design-system/` của project.
+
+## Framework khác
+
+Glob mặc định cover web component styles phổ biến. Stack khác (vd. `.qml`, `.ui`, template engine) → bổ sung glob trong **`99-project-local.mdc`**, giữ `alwaysApply: false`.
+
+## Khi redesign
+
+- Map màn hình/luồng hiện tại → parity tính năng (rule baseline).
+- Ghi delta visual vào design-system doc, không chỉ trong code.
+
+## Kích hoạt skill
+
+- Layout/component/visual language → `frontend-design` và/hoặc `portfolio-design-system`.
+- Chuẩn chung portfolio → `portfolio-design-system`.
+
+## Tránh
+
+- Copy UI từ app khác mà không adapt art direction.
+- Hard-code màu/spacing ngoài tokens/doc đã định nghĩa.

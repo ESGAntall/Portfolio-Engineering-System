@@ -1,0 +1,5 @@
+# Local clones of independent application repositories (nested .git, source, builds).
+/projects/
+
+# Deprecated clone path — remove this line after all local clones use projects/<id>/
+/portfolio/projects/

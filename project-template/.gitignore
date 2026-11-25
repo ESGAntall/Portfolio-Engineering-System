@@ -1,0 +1,55 @@
+# Generic defaults — framework-agnostic. Adapt per stack before install/build (see docs/engineering/gitignore.md).
+
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+build/
+out/
+
+# Test coverage
+coverage/
+.nyc_output/
+htmlcov/
+
+# Secrets (keep documented examples)
+.env
+.env.*
+!.env.example
+
+# Logs & temp
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+tmp/
+temp/
+*.tmp
+
+# OS
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# IDE / editor (local)
+.idea/
+*.swp
+*~
+.vscode/*
+!.vscode/extensions.json
+
+# Common tool caches (safe to remove if unused)
+.cache/
+.turbo/
+*.tsbuildinfo
+
+# Stack-specific: add only when the project uses that stack (do not uncomment by default)
+# target/          # Rust
+# __pycache__/     # Python
+# .venv/           # Python
+# .next/           # Next.js
+# .nuxt/           # Nuxt
+# .svelte-kit/     # SvelteKit

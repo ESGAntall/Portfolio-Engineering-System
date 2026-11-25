@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "generator": "",
+  "generatedAt": "",
+  "commit": "",
+  "roots": [],
+  "graphify": {
+    "queryDoc": "docs/architecture/code-graph.md",
+    "refreshVerifiedAt": ""
+  },
+  "notes": "ADR O-002: ưu tiên Graphify khi app có source; điền sau refresh thực tế. Không xóa index cũ trước khi verify graph mới. generator: graphify|manual|search-fallback"
+}

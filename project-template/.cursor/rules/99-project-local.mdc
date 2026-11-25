@@ -1,0 +1,23 @@
+---
+description: Rule riêng app — stack, verify, glob UI bổ sung (ADR O-001 sync không ghi đè file này).
+globs: "**/*"
+alwaysApply: false
+---
+
+# Project Local (điền khi bootstrap)
+
+- Stack: _(điền)_
+- Lệnh verify: `docs/testing/README.md`
+- Convention local: _(điền)_
+
+## Rules portfolio
+
+Copy rules 00–30 từ `portfolio-engineering-system` (O-001).
+
+## UI globs bổ sung (rule 20)
+
+Nếu UI không dùng `.tsx/.jsx/.vue/.svelte/.css/.scss`, thêm glob tại đây (vd. `**/*.qml`) — `alwaysApply: false`.
+
+## `.gitignore` bootstrap (bắt buộc)
+
+Trước cài dependency hoặc build: làm theo `docs/engineering/gitignore.md` — inspect stack → cập nhật root `.gitignore` → chỉ thêm rule stack-specific khi áp dụng → verify với `git status` → báo generic vs stack-specific. **Không** tùy chọn khi bootstrap project.

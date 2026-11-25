@@ -1,0 +1,63 @@
+---
+description: Hybrid workflow — task nhỏ/lớn theo risk & impact (ADR O-003); task lớn cần plan và approval; báo done/ship → quality-gate.
+alwaysApply: true
+---
+
+# Workflow và phê duyệt
+
+Chi tiết: `docs/decisions/O-003-task-classification.md`.
+
+## Task nhỏ (tất cả điều sau)
+
+- Phạm vi module **độc lập**.
+- Không đổi architecture, **API contract** hoặc **data model** (đã xác định rõ — xem clarification field bên dưới).
+- Không ảnh hưởng đáng kể module khác.
+- Requirement **rõ ràng**.
+
+→ Triển khai trực tiếp, verify, báo cáo ngắn.
+
+## Task lớn (một trong các điều sau đủ)
+
+- Cross-module hoặc cross-layer.
+- Đổi architecture, API, database hoặc data contract.
+- Authentication, authorization hoặc security-sensitive.
+- Redesign **nhiều** màn hình **hoặc** một surface có risk regression theo O-003 (UI).
+- Refactor có rủi ro regression cao.
+- Requirement mơ hồ hoặc nhiều phương án.
+
+→ **Không** implement hàng loạt trước approval.
+
+## Không dùng
+
+- Số lượng file là tiêu chí **duy nhất** để phân loại.
+- Coi task **nhỏ** chỉ vì thay đổi gói trong một file.
+
+## Clarification: field / data (trước classify)
+
+Thêm field kiểu `updatedAt`, `createdAt`, `status`, `lastViewedAt` → xác định **persistent** | **runtime-only** | **derived/computed**. Chưa rõ và có thể đụng schema hoặc data contract → hỏi user hoặc nêu assumption **trước** classify/implement. Chi tiết: skill `requirement-orchestrator`.
+
+## Task lớn — bắt buộc
+
+1. Phân tích (impact, dependency).
+2. Implementation plan (bước, risk, rollback).
+3. **Verification criteria** cho slice.
+4. Chờ user **phê duyệt** trước implement.
+
+## Task nhỏ — không được
+
+- Bỏ qua verify (test/lint/build theo chuẩn project).
+- Mở rộng scope không được yêu cầu.
+
+## Báo cáo hoàn thành (trigger)
+
+Khi user nói **done / ship / merge / release / hoàn thành (tính năng) / báo cáo kết quả implementation** → thực hiện hoặc route skill **`quality-gate`** (phạm vi theo task nhỏ/lớn; checklist chi tiết: rule `30-quality-gates.mdc` + skill).
+
+## Điểm vào điều phối
+
+- Không chắc phân loại → coi là **lớn**, skill `requirement-orchestrator`.
+- Sau approval → skill `engineering-workflow`.
+
+## Ghi chép
+
+- Quyết định quan trọng → `docs/decisions/` (ADR).
+- Hành vi user-facing → `docs/product/` khi có.
