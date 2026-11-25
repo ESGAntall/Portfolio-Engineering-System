@@ -2,125 +2,230 @@
 
 Áp dụng cho implementation client. **Không** có persistence server cho các entity dưới đây.
 
-## Knowledge và Node (quyết định canonical)
+Schema này là `schemaVersion: 1`. Chưa có client đã ship, nên không có migration từ tên cũ.
 
-| Khái niệm | Spec entity | Ý nghĩa |
-|-----------|-------------|---------|
-| **Knowledge** (Tài liệu) | `knowledge[]` | Nội dung tài liệu thật trong thư viện (title, body, …) |
-| **Node** (Knowledge Map) | `mapNodes[]` | **Biểu diễn** của một Knowledge trên bản đồ — tham chiếu `knowledgeId`, **không** nhân đôi body |
+## Tên đã rút khỏi schema
 
-- Mỗi Node **bắt buộc** tham chiếu đúng một `knowledgeId`.
-- CRUD nội dung tài liệu = thao tác trên **Knowledge**; map đọc cùng nội dung qua `knowledgeId`.
-- Tạo Knowledge mới: app **phải** tạo Node map tương ứng (1–1) để hiển thị trên Knowledge Map (layout trên Node: ADR).
-- **Không** lưu bản copy nội dung tài liệu trong Node.
+Các tên sau **không** còn là entity, collection, hoặc field:
 
-### Xóa và dọn dẹp
+| Tên cũ | Trạng thái trong schema v1 |
+|--------|----------------------------|
+| `Knowledge` (entity / collection) | Không dùng. Nội dung tài liệu nằm trên `Node`. |
+| `MapNode` | Không dùng. Không có bản sao nội dung cho bản đồ. |
+| `NodeGraphEdge` | Không dùng. Quan hệ nằm trên `Link`. |
+| `NoteKnowledgeLink` | Không dùng. Quan hệ nằm trên `Link`. |
 
-| Thao tác | Knowledge | Map Node | NodeGraphEdge | NoteKnowledgeLink | Note |
-|----------|-----------|----------|---------------|-------------------|------|
-| **Delete Knowledge** (xóa tài liệu) | Xóa | Xóa node của `knowledgeId` | Xóa edge incident với node đó | Xóa link trỏ `knowledgeId` | **Giữ** |
-| **Remove from map** (chỉ gỡ khỏi map) | **Giữ** | Xóa node | Xóa edge incident với node đó | **Giữ** link (vẫn trỏ `knowledgeId`) | **Giữ** |
-| **Delete edge** | — | — | Chỉ edge đó | — | — |
+Không có thao tác “Remove from map”.
 
-*Remove from map* là tùy chọn UX nếu product có action “gỡ khỏi bản đồ”; **Delete Knowledge** là xóa tài liệu khỏi thư viện.
+## Node và Knowledge Map
 
-## `is_demo` — phân loại bắt buộc
+| Khái niệm | Trong spec | Ý nghĩa |
+|-----------|------------|---------|
+| **Node** | Entity `nodes[]` | Tên chuẩn trong data model, code và API. Chính là tài liệu: nội dung và metadata. |
+| **Knowledge / Tài liệu** | Nhãn UI | Cách người dùng thấy một Node. Không phải entity thứ hai. |
+| **Knowledge Map** | Giao diện | Vẽ mọi Node và mọi `Link` có hai đầu đều là Node. |
 
-**Không** mọi record đều mang `is_demo`. Chỉ các loại sau:
+- Node, MapNode và Knowledge không phải ba entity.
+- Knowledge Map không lưu body riêng.
+- Mọi Node đều xuất hiện trên Knowledge Map. Không có trạng thái “gỡ khỏi bản đồ”.
+- Vị trí/layout trên bản đồ: **OPEN**. Không thêm field tọa độ cho đến khi có quyết định.
+
+## `is_demo`
+
+Chỉ các record sau mang field này. Phạm vi không mở rộng thêm loại record khác.
 
 | Collection / record | `is_demo` | Ghi chú |
 |---------------------|-----------|---------|
-| Note | **Có** | Demo `true`, user `false` |
-| Knowledge | **Có** | |
-| MapNode | **Có** | Thường khớp Knowledge cùng `knowledgeId` |
-| NoteKnowledgeLink | **Có** | |
-| NodeGraphEdge | **Có** | |
-| ActivityEvent | **Có** | Demo activity seed được phép `true` |
-| Chat `messages[]` | **Luôn `false`** | Không seed message demo |
-| CheckIn | **Luôn `false`** | Không seed check-in |
-| `aiContextSelection` | **Không có field** | Preference user — Clear/Re-fill demo **không** reset |
+| Note | Có | Demo `true`, user `false` |
+| Node | Có | Demo `true`, user `false` |
+| Link | Có | Demo `true`, user `false` |
+| ActivityEvent | Có | Seed demo được phép `true`; thao tác user là `false` |
+| Chat `messages[]` | Luôn `false` | Có field. Không seed message demo. |
+| CheckIn | **OPEN** | Chưa chốt có field hay không. Không seed check-in. |
+| `aiContextSelection` | Không có field | Preference của user |
+
+`Node.is_demo` là cờ của chính tài liệu đó. Không còn entity MapNode để phải khớp cờ.
 
 **ID:**
 
 | Loại | Quy tắc |
 |------|---------|
-| Demo | Deterministic, fixed (manifest demo trong ADR app) |
-| User | Random (UUID v4 hoặc tương đương) |
+| Demo | Deterministic. Danh sách ID cụ thể: **OPEN** (demo ID manifest). |
+| User | UUID v4 hoặc tương đương |
 
-### Va chạm ID (demo vs user)
+Trong một store, `notes[].id` và `nodes[].id` dùng chung một không gian ID. Một ID không được vừa là Note vừa là Node, vì `aiContextSelection.includedIds` là danh sách ID phẳng.
 
-Khi Re-fill hoặc tạo demo canonical mà **đã tồn tại** record cùng `id` với `is_demo: false`:
+### Va chạm ID khi tạo demo
 
-1. **Không** overwrite, **không** xóa user record.
-2. **Skip** tạo demo cho ID đó.
-3. Ghi nhận collision (dev log; UX: ADR — ví dụ thông báo “demo ID không khả dụng”).
+Re-fill và mọi lần tạo demo canonical **không** overwrite record đã có và **không** tạo ID trùng.
 
-Demo operation **không bao giờ** làm mất hoặc sửa bản ghi user.
+Khi ID demo đụng record đang tồn tại (`is_demo: true` hoặc `is_demo: false`):
 
-## Entities (tóm tắt)
+- Record đang có được giữ nguyên.
+- Không tạo thêm record cùng ID.
+
+Cách báo cho người dùng và mọi xử lý va chạm ngoài hai quy tắc trên: **OPEN**.
+
+## Entities
+
+Field liệt kê dưới đây là dữ liệu **persistent** trong `localStorage`.
 
 ### Note (Ghi chú)
 
-- `id`, `is_demo`, title, body, timestamps.
+- `id`, `is_demo`, `title`, `body`, `createdAt`, `updatedAt`.
 
-### Knowledge (Tài liệu)
+### Node (Tài liệu)
 
-- `id`, `is_demo`, title, body, timestamps.
+- `id`, `is_demo`, `title`, `body`, `createdAt`, `updatedAt`.
+- `title` và `body` là nội dung tài liệu duy nhất. Knowledge Map đọc chính các field này.
 
-### MapNode
+Ví dụ:
 
-- `id`, `is_demo`, `knowledgeId`, layout fields (ADR: position, …).
+```json
+{
+  "id": "node-user-1",
+  "is_demo": false,
+  "title": "Tài liệu",
+  "body": "Nội dung tài liệu",
+  "createdAt": "2026-01-01T00:00:00.000Z",
+  "updatedAt": "2026-01-01T00:00:00.000Z"
+}
+```
 
-### NoteKnowledgeLink
+### Link
 
-- `id`, `is_demo`, `noteId`, `knowledgeId` — **không** dùng `nodeId` cho liên kết Note.
+Một entity cho mọi quan hệ có hướng. Không có `label`, loại quan hệ, hay metadata khác. Những thuộc tính đó là **OPEN**.
 
-### NodeGraphEdge (Knowledge Map)
+- `id`
+- `is_demo`
+- `sourceType`: `"note"` hoặc `"node"`
+- `sourceId`
+- `targetType`: `"note"` hoặc `"node"`
+- `targetId`
 
-- `id`, `is_demo`, `sourceNodeId`, `targetNodeId`, optional `label`.
-- User chọn source/target; **không** cạnh ngược tự động; **không** AI tạo/sửa.
-- Cardinality: nhiều bản ghi edge (1-1, 1-N, N-1, N-N).
+Bốn kiểu hợp lệ:
+
+| Chiều | `sourceType` | `targetType` |
+|-------|--------------|--------------|
+| Node → Node | `node` | `node` |
+| Node → Note | `node` | `note` |
+| Note → Node | `note` | `node` |
+| Note → Note | `note` | `note` |
+
+Quy tắc:
+
+- Một Note hoặc Node có thể là đầu của nhiều Link.
+- Hướng được giữ: đổi source và target là một Link khác.
+- Cùng một chiều, một cặp chỉ có tối đa một Link.
+- Unique constraint: `sourceType + sourceId + targetType + targetId`.
+- Constraint này phân biệt chiều. Không dùng constraint bỏ qua hướng.
+- Link ngược chỉ tồn tại khi user tạo record thứ hai.
+- Tạo một chiều không tự tạo chiều kia.
+- Link không có thao tác sửa nội dung, vì không có field nội dung để sửa.
+- Self-link (`sourceId` cùng `targetId` và cùng type): **OPEN**.
+
+Ví dụ bốn chiều:
+
+```json
+[
+  {
+    "id": "link-node-node",
+    "is_demo": false,
+    "sourceType": "node",
+    "sourceId": "node-a",
+    "targetType": "node",
+    "targetId": "node-b"
+  },
+  {
+    "id": "link-node-note",
+    "is_demo": false,
+    "sourceType": "node",
+    "sourceId": "node-a",
+    "targetType": "note",
+    "targetId": "note-a"
+  },
+  {
+    "id": "link-note-node",
+    "is_demo": false,
+    "sourceType": "note",
+    "sourceId": "note-a",
+    "targetType": "node",
+    "targetId": "node-a"
+  },
+  {
+    "id": "link-note-note",
+    "is_demo": false,
+    "sourceType": "note",
+    "sourceId": "note-a",
+    "targetType": "note",
+    "targetId": "note-b"
+  }
+]
+```
 
 ### Chat (singleton)
 
 ```json
-"chat": {
+{
   "conversationId": "singleton",
   "messages": [
-    { "id", "role", "content", "createdAt", "is_demo": false, "sources?": [] }
+    {
+      "id": "msg-1",
+      "role": "user",
+      "content": "Nội dung",
+      "createdAt": "2026-01-01T00:00:00.000Z",
+      "is_demo": false
+    }
   ]
 }
 ```
 
-- Đúng **một** conversation; không session management ẩn.
+- Đúng một conversation. Không có session ẩn.
+- Mọi message có `is_demo: false`.
+- Schema từng phần tử `sources` trên message trợ lý, nếu implementation lưu attribution đã validate: **OPEN** cùng HTTP contract. Phần tử đó chỉ được trỏ Note hoặc Node đã nằm trong request và đã qua kiểm tra attribution.
 
 ### CheckIn
 
-- `id`, `date` (`YYYY-MM-DD` local), `createdAt` — **không** field `is_demo` (luôn user-real).
+- `id`, `date` (`YYYY-MM-DD` theo ngày local), `createdAt`.
+- Có thêm `is_demo` hay không: **OPEN**.
+- Không seed check-in trong demo, Re-fill, hoặc Activity demo.
+- Tối đa một check-in cho mỗi `date`.
 
 ### ActivityEvent
 
-- `id`, `is_demo`, `type`, `entityRef`, `timestamp`, …
+- `id`, `is_demo`, `type`, `entityRef`, `timestamp`.
+- Catalog giá trị `type`: **OPEN**.
+- Một thao tác user tạo đúng một event cho thao tác đó.
+- Dọn Link do xóa Note/Node, hoặc do Clear Demo, không tạo thêm event xóa cho từng Link bị dọn.
 
 ### AI context selection
 
 ```json
-"aiContextSelection": {
+{
   "mode": "include-list",
-  "includedIds": ["..."],
+  "includedIds": ["note-a", "node-a"],
   "initialized": true
 }
 ```
 
-- ADR có thể dùng exclusion-list nếu tương đương semantically — spec yêu cầu: persisted; không reset khi Clear/Re-fill demo.
+- Persistent. Không có `is_demo`.
+- `includedIds` chỉ chứa ID của Note và Node.
+- `initialized: false` nghĩa là chưa áp dụng lần chọn đầu.
+- Lần đầu (`initialized` chuyển sang `true`): gán `includedIds` bằng mọi Note và Node đang có. Thư viện rỗng thì danh sách rỗng, và lần đó vẫn tính là đã khởi tạo.
+- User bỏ từng ID hoặc bỏ hết. Danh sách rỗng là lựa chọn hợp lệ.
+- Tạo Note hoặc Node mới: thêm ID mới, kể cả khi danh sách đang rỗng. Không thêm lại ID user đã bỏ.
+- Xóa Note hoặc Node: gỡ ID đó.
+- Re-fill tạo Note/Node demo mới: thêm các ID vừa tạo. Record demo đã tồn tại bị skip thì không thêm lại ID user đã bỏ.
+- Clear Demo: gỡ ID của Note/Node demo đã bị xóa. Giữ ID còn lại, gồm Note và Node của user còn tồn tại. Không chọn lại toàn bộ thư viện.
+- Clear Demo và Re-fill không đặt lại preference về select-all.
 
-**Quy tắc selection (đồng bộ spec sản phẩm):**
+## Xóa và dọn Link
 
-- Lần đầu: all Notes + Knowledge → `includedIds` đầy đủ.
-- User bỏ chọn hết: `includedIds` rỗng — **không** auto-fill all khi gửi AI.
-- Tạo doc mới: **thêm** id mới vào `includedIds` **ngay cả khi** user trước đó đã bỏ chọn tất cả (không resurrect doc cũ).
-- Xóa doc: loại id khỏi set.
-- Re-fill tạo **Knowledge/Note demo mới** (id chưa có): id mới được **thêm** vào `includedIds` như doc mới; **không** chọn lại doc user đã bỏ chọn.
+| Thao tác | Note | Node | Link | Activity |
+|----------|------|------|------|----------|
+| Xóa Note | Xóa note đó | Giữ | Xóa mọi Link có note đó ở `sourceId` hoặc `targetId` | Một event cho việc xóa Note. Không có event xóa riêng cho từng Link bị dọn. |
+| Xóa Node | Giữ | Xóa node đó | Xóa mọi Link có node đó ở `sourceId` hoặc `targetId` | Một event cho việc xóa Node. Không có event xóa riêng cho từng Link bị dọn. |
+| Xóa Link | Giữ | Giữ | Chỉ Link đó | Một event cho việc xóa Link |
 
 ## localStorage schema
 
@@ -130,66 +235,88 @@ Demo operation **không bao giờ** làm mất hoặc sửa bản ghi user.
 {
   "schemaVersion": 1,
   "notes": [],
-  "knowledge": [],
-  "mapNodes": [],
-  "noteKnowledgeLinks": [],
-  "nodeGraphEdges": [],
-  "chat": { "conversationId": "singleton", "messages": [] },
+  "nodes": [],
+  "links": [],
+  "chat": {
+    "conversationId": "singleton",
+    "messages": []
+  },
   "checkIns": [],
   "activityEvents": [],
-  "aiContextSelection": {}
+  "aiContextSelection": {
+    "mode": "include-list",
+    "includedIds": [],
+    "initialized": false
+  }
 }
 ```
 
-- Storage key: ADR (ví dụ `noteai:v1`).
-- **Không** dùng `demoSetVersion` để overwrite demo khi Re-fill.
+- Storage key: **OPEN**.
+- Không dùng `demoSetVersion` để overwrite demo khi Re-fill.
+- Không có `knowledge`, `mapNodes`, `noteKnowledgeLinks`, `nodeGraphEdges`.
 
-### Validation, migration, quota, recovery, export/import
+### Load, validation, migration, quota, recovery
 
-- Giữ như trước: validate on load; migration không đổi `is_demo` user/demo; quota error visible; corrupt JSON recovery; export/import có confirm (merge policy: ADR).
+Thứ tự khi mở app hoặc khi store được đọc lại:
+
+1. Đọc `localStorage`.
+2. Validate JSON và `schemaVersion`.
+3. Migrate nếu policy migration của version đó đã có. Chưa có bản đã ship nên chưa có bảng migrate từ schema khác.
+4. Chỉ sau khi store hợp lệ mới chạy logic check-in.
+
+- Migration không đổi `is_demo` của Note, Node, Link, ActivityEvent đang có.
+- `QuotaExceeded`: hiện lỗi, giữ trạng thái trước lần save thất bại.
+- JSON hỏng: recovery cho user. Không tạo check-in trên lần load thất bại.
+- Export là JSON của root document.
+- Import cần xác nhận.
+- Import là replace-all hay merge-by-id: **OPEN**.
 
 ## Demo data management
 
-### Re-fill Demo — **SKIP-EXISTING** (definitive)
+### Re-fill Demo — SKIP-EXISTING
 
-**Mục đích:** Tạo **thiếu** bản ghi demo canonical; **không** sửa demo đã có.
+Mục đích: tạo record demo canonical còn thiếu. Không sửa record đã có.
 
-1. Load canonical demo definitions (deterministic IDs).
-2. Với từng entity demo định nghĩa:
-   - **Không** tồn tại `id` → **tạo** (`is_demo: true`).
-   - **Đã tồn tại** `id` + `is_demo: true` → **skip** — giữ nguyên record **chính xác** (không refresh/overwrite/update).
-   - **Đã tồn tại** `id` + `is_demo: false` → **skip** + [va chạm ID](#va-chạm-id-demo-vs-user).
-3. **Không** sửa/xóa bất kỳ `is_demo: false`.
-4. **Không** duplicate ID.
-5. **Không** tạo check-in.
-6. **Không** reset `aiContextSelection`.
+1. Đọc định nghĩa demo (ID deterministic). Manifest cụ thể: **OPEN**.
+2. Với từng record demo định nghĩa, theo `id`:
+   - Chưa có ID → tạo với `is_demo: true`.
+   - Đã có ID → skip, giữ nguyên record, không refresh và không overwrite.
+3. Không sửa hoặc xóa record `is_demo: false`.
+4. Không tạo ID trùng.
+5. Không tạo check-in.
+6. Không đưa selection về select-all.
+7. Mỗi Note hoặc Node demo vừa được tạo ở bước 2 được thêm vào `includedIds`. ID đã tồn tại và bị skip không được thêm chỉ vì Re-fill chạy lại.
 
 ### Clear Demo
 
-- Xóa mọi record có `is_demo: true` trong: Note, Knowledge, MapNode, NoteKnowledgeLink, NodeGraphEdge, ActivityEvent (demo).
-- **Không** xóa `is_demo: false`.
-- **Không** xóa check-in.
-- **Không** xóa chat messages (luôn user).
-- Dọn **orphan** links/edges tham chiếu id demo đã xóa; **giữ** quan hệ giữa các entity user còn sống.
-- Confirm UI.
+- Xóa record `is_demo: true` trong Note, Node, Link, ActivityEvent.
+- Giữ record `is_demo: false`.
+- Không xóa check-in.
+- Không xóa chat.
+- Sau khi xóa, dọn Link còn lại mà `sourceId` hoặc `targetId` không còn Note/Node tương ứng. Việc dọn này gồm Link user trỏ vào record demo đã xóa.
+- Giữ Link mà cả hai đầu vẫn còn.
+- Gỡ khỏi `includedIds` mọi ID Note/Node đã biến mất. Giữ ID còn lại.
+- Không tạo Activity cho từng record bị xóa bởi Clear Demo hoặc bởi bước dọn Link.
+- Cần xác nhận trước khi chạy.
 
-Sau Clear Demo, Re-fill **tạo lại** demo thiếu bằng **cùng** deterministic IDs (skip nếu còn sót demo `is_demo: true`).
+Sau Clear Demo, Re-fill tạo lại demo thiếu bằng cùng quy tắc ID deterministic.
 
 ### So sánh
 
 | | Clear Demo | Re-fill Demo |
-|---|------------|----------------|
+|---|----------------|--------------|
 | User records | Giữ | Giữ |
-| Demo đã tồn tại | Xóa (nếu `is_demo`) | **Skip** — không overwrite |
-| Demo thiếu | — | Tạo mới |
+| Demo đã tồn tại | Xóa nếu `is_demo: true` | Skip, không overwrite |
+| Demo thiếu | Không tạo | Tạo mới |
+| Link mồ côi | Dọn | Không phát sinh từ skip |
 | Check-in | Không đụng | Không tạo |
-| AI context preference | Không reset | Không reset |
-
-### Confirm
+| AI context | Gỡ ID đã mất; giữ phần còn lại | Thêm ID Note/Node demo vừa tạo; không chọn lại ID đã bỏ |
 
 Clear Demo và Re-fill Demo đều cần xác nhận.
 
-## Activity vs check-in
+## Activity và check-in
 
-- `checkIns`: collection riêng; một bản ghi / ngày local tối đa.
-- `activityEvents`: có thể có demo seed `is_demo: true`; **không** seed check-in.
+- `checkIns` là collection riêng, tối đa một bản ghi mỗi ngày local.
+- Check-in không phải ActivityEvent.
+- `activityEvents` có thể có seed `is_demo: true`.
+- Seed đó không tạo check-in.

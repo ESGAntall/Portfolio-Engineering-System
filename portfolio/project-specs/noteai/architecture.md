@@ -6,78 +6,99 @@
 
 | Thành phần | Quyết định |
 |------------|------------|
-| Ứng dụng | Web app **client-side** trong portfolio; repo app độc lập |
-| Dữ liệu ứng dụng | **Chỉ** `localStorage` trên browser — không DB ứng dụng phía server |
-| Tài khoản / auth | **Không** — không login, đăng ký, Google Login, demo login, logout; không DB user-account |
-| Gọi Gemini | **Managed AI Runtime** (proxy server-side) — API key **chỉ** trên server |
-| Frontend | **Không** chứa API key; **không** gọi Gemini trực tiếp từ client với secret |
+| Ứng dụng | Web app client-side. Repo app độc lập với portfolio meta repo. |
+| Dữ liệu ứng dụng | Chỉ `localStorage`. Không DB ứng dụng phía server. |
+| Tài liệu | Entity `Node`. UI gọi là Tài liệu / Knowledge. Không có entity Knowledge hay MapNode riêng. |
+| Quan hệ | Entity `Link` có hướng. Không có `NodeGraphEdge` hay `NoteKnowledgeLink`. |
+| Tài khoản / auth | Không login, đăng ký, Google Login, demo login, logout. Không DB user-account. |
+| Gọi Gemini | Managed AI Runtime. API key chỉ trên server. |
+| Frontend | Không chứa API key. Không gọi Gemini bằng secret. |
 
-Chi tiết sản phẩm: [product-requirements.md](product-requirements.md). Mô hình dữ liệu: [data-model.md](data-model.md). Lớp xử lý prompt: [prompt-processing-layer.md](prompt-processing-layer.md).
+Chi tiết sản phẩm: [product-requirements.md](product-requirements.md). Dữ liệu: [data-model.md](data-model.md). PPL: [prompt-processing-layer.md](prompt-processing-layer.md).
 
 ## Ranh giới tin cậy
 
 ```text
 [Browser: NOTEAI SPA]
   │  read/write application state → localStorage
-  │  HTTP(S): chat completion requests (no API key in payload from client secrets)
+  │  PPL deterministic trên client
+  │  HTTP(S): structured request (không API key, không trusted system instruction)
   ▼
-[Managed AI Runtime / proxy]
-  │  holds Gemini API key (env/secret store)
-  │  rate limit, quota, token/cost guards, request validation
+[Managed AI Runtime]
+  │  giữ Gemini API key
+  │  validate request
+  │  tự tạo trusted system instructions
+  │  rate limit, quota, timeout, payload limit, token/cost guards
   ▼
 [Google Gemini API]
+  │
+  ▼
+[Runtime]
+  │  validate attribution của response
+  ▼
+[Browser]
+  │  chỉ hiển thị attribution đã qua kiểm tra
 ```
 
-**Managed AI Runtime** không lưu trữ Note, Knowledge, Chat, check-in hay quan hệ của user — không thay thế `localStorage`. Runtime chỉ phục vụ **đường AI** (và các policy server-side liên quan quota).
+Note, Node và user message là untrusted input. Delimiter trong text chỉ là cấu trúc dữ liệu, không phải ranh giới tin cậy.
+
+Runtime không lưu Note, Node, Link, Chat, check-in, Activity, hay AI context selection. Runtime không thay `localStorage`.
 
 ## Client application
 
 | Khía cạnh | Quyết định |
 |-----------|------------|
-| Persistence chính | `localStorage` (schema có version — xem [data-model.md](data-model.md)) |
-| Export/import | JSON do client điều khiển |
-| Đa thiết bị / sync cloud | **Out of scope** mặc định (không user account) |
+| Persistence | `localStorage`, `schemaVersion` 1 — [data-model.md](data-model.md) |
+| Knowledge Map | View trên mọi Node và mọi Link Node → Node. Không copy body. Không Remove from map. |
+| Export / import | JSON do client giữ. Policy replace hay merge: **OPEN**. |
+| Đa thiết bị / cloud sync | Ngoài phạm vi mặc định |
 
-## Explicitly out of scope (application data plane)
+Init app: load, validate, và migrate store trước check-in. Load thất bại thì không tạo check-in.
 
-Không triển khai cho **dữ liệu ứng dụng**:
+## Ngoài phạm vi (data plane của ứng dụng)
 
 - PostgreSQL, MySQL, MongoDB hoặc DB ứng dụng khác
-- ORM/server persistence cho Note, Knowledge, quan hệ, chat, check-in
+- ORM hoặc persistence server cho Note, Node, Link, chat, check-in
 - Login, registration, Google Login, demo login, logout
-- Hệ thống đăng nhập / user-account database
-- Lưu lịch sử chat hoặc thư viện trên server
+- Lưu thư viện hoặc lịch sử chat trên server
+- Remove from map, `MapNode`, collection `knowledge`
 
-## Managed AI Runtime (allowed server component)
+## Managed AI Runtime
 
 | Khía cạnh | Quyết định |
 |-----------|------------|
-| Mục đích | Proxy an toàn tới Gemini; không expose API key ra frontend |
-| API key | Chỉ trong môi trường server/secret — **không** commit vào repo app |
-| Xác thực end-user | **Không** giả định — không per-user quota strict như multi-tenant auth |
-| Quota | **Shared** (deployment-wide hoặc theo policy runtime) — ghi rõ trong vận hành |
-| Rate limiting | Runtime **phải** có — HTTP 429 / thông báo client khi vượt; **có thể** IP-based để giảm lạm dụng (không thay thế identity user) |
-| Lỗi | Phân loại: network, quota, invalid request, upstream Gemini — client hiển thị an toàn, không lộ secret |
-| Token / cost | Budget trên runtime và/hoặc trong [Prompt Processing Layer](prompt-processing-layer.md) phía client trước khi gửi |
+| Mục đích | Proxy tới Gemini. Không đưa API key ra frontend. |
+| API key | Chỉ trong môi trường server. Không commit vào repo app. |
+| End-user auth | Không giả định. Không có per-user quota strict. |
+| Quota | Shared trên deployment. Con số: **OPEN**. |
+| Rate limit | Bắt buộc. Vượt ngưỡng thì HTTP 429 và thông báo an toàn trên client. Có thể giới hạn theo IP. IP limit không phải danh tính user. |
+| Timeout và payload limit | Bắt buộc có guard. Ngưỡng số: **OPEN**. |
+| Lỗi | Phân loại network, quota, invalid request, timeout, upstream Gemini. Client không hiện secret hoặc internals. |
+| System instructions | Chỉ runtime tạo và gắn. Client không gửi bản có thẩm quyền. |
+| Attribution | Runtime kiểm tra nguồn trong response trước khi client coi đó là evidence. |
 
-Runtime **không** được yêu cầu client gửi API key. Client có thể gửi assembled prompt/context (sau PPL) theo contract API công khai của runtime (định nghĩa chi tiết tại ADR/repo app khi implement).
+Client gửi structured request sau PPL. Request gồm dữ liệu untrusted (user message sau NFC, các chunk thư viện đã chọn, attribution, `pplVersion`). Schema HTTP cụ thể: **OPEN**.
 
-## Prompt Processing Layer (client)
+## Prompt Processing Layer
 
-Trước khi gọi runtime, client chạy **Prompt Processing Layer** (xem [prompt-processing-layer.md](prompt-processing-layer.md)) — ưu tiên xử lý deterministic, giảm token, bảo toàn ý người dùng và attribution.
+Chạy trên client, deterministic, trước request. Chi tiết và thứ tự bước: [prompt-processing-layer.md](prompt-processing-layer.md).
 
-## Deployment ghi chú (chưa chọn cụ thể)
+PPL giảm rủi ro prompt injection. PPL không bảo đảm đã loại hết injection.
 
-- Frontend: static hosting hoặc bất kỳ host phù hợp SPA.
-- Managed AI Runtime: service riêng (serverless/function/container) — **framework/hosting runtime TBD** tại ADR app.
-- Node.js (hoặc tương đương) cho **build tooling** frontend vẫn tách biệt với runtime AI.
+## Deployment
+
+- Frontend: static hosting hoặc host SPA khác. Lựa chọn cụ thể: **OPEN**.
+- Managed AI Runtime: service riêng. Host và hình thức deploy: **OPEN**.
+- Công cụ build frontend tách khỏi process giữ API key.
+- Framework và build tool: **OPEN**.
 
 ## Mirror sang repo ứng dụng
 
-Khi scaffold: copy/summary vào `docs/architecture/` của repo [noteai](https://github.com/ESGAntall/noteai). ADR bổ sung cho contract runtime API và hosting — không mâu thuẫn tài liệu này trừ khi user approve thay đổi ràng buộc.
+Khi scaffold được phê duyệt: đưa tóm tắt constraint này vào `docs/architecture/` của repo [noteai](https://github.com/ESGAntall/noteai). ADR app được phép ghi schema cho các mục **OPEN**. ADR đó không được đổi các quyết định đã chốt trong file này trừ khi user phê duyệt sửa spec.
 
-## Open (chưa quyết định tại meta)
+## Open
 
-- Frontend framework / build tool
-- Hình thức cụ thể của Managed AI Runtime (host, contract chi tiết)
-- Giá trị số cụ thể shared quota / token budget mặc định (policy vận hành + acceptance trong [acceptance-criteria.md](acceptance-criteria.md))
+- Framework / build tool
+- Host runtime, deploy, và HTTP contract
+- Giá trị quota, `B_lib`, giới hạn độ dài message và response, timeout, payload limit
+- Layout Node trên Knowledge Map

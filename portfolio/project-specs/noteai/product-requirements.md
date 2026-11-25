@@ -1,141 +1,189 @@
 # NOTEAI — Product requirements
 
-Chi tiết hành vi sản phẩm. Ràng buộc kỹ thuật: [architecture.md](architecture.md). Dữ liệu: [data-model.md](data-model.md). PPL: [prompt-processing-layer.md](prompt-processing-layer.md).
+Hành vi sản phẩm. Ràng buộc: [architecture.md](architecture.md). Dữ liệu: [data-model.md](data-model.md). PPL: [prompt-processing-layer.md](prompt-processing-layer.md).
 
-## 1. Mở ứng dụng & phạm vi
+## 1. Mở ứng dụng
 
-- Web app standalone trong portfolio; state trên `localStorage`.
-- **Không** login, đăng ký, Google Login, demo login, logout.
+- Web app standalone. State trên `localStorage`.
+- Không login, đăng ký, Google Login, demo login, logout.
 - Không đồng bộ cloud mặc định.
+- Khi khởi tạo, và mỗi lần cần đọc store để quyết định check-in: load, validate, rồi migrate nếu có migration đã định nghĩa. Store chưa hợp lệ thì dừng, hiện recovery, không tạo check-in.
+- Store hợp lệ rồi mới xét check-in của ngày local hiện tại.
 
 ## 2. Check-in
 
-### FR-CHECKIN-1 — Tự động khi init và khi ngày có thể đổi
+### FR-CHECKIN-1 — Sau khi store sẵn sàng
 
-- **Init app:** tính ngày local `YYYY-MM-DD`; nếu chưa có check-in cho ngày đó → tạo một (không field `is_demo`).
-- **Tab visible lại:** nếu ngày local có thể đã đổi so với lần check-in gần nhất → chạy lại logic ngày hiện tại (tối đa một check-in / ngày).
-- **Reload / mở lại:** không duplicate cùng ngày.
-- Đổi ngày local → cho phép check-in ngày mới (một bản ghi).
+- Tính ngày local `YYYY-MM-DD`.
+- Chưa có check-in của ngày đó thì tạo một bản ghi.
+- Tab visible lại: nếu ngày local có thể đã đổi so với lần xét gần nhất, chạy lại logic của ngày hiện tại.
+- Reload cùng ngày không tạo bản ghi thứ hai.
+- Đổi ngày local cho phép một check-in của ngày mới.
+- Tối đa một check-in mỗi ngày local.
 
-### FR-CHECKIN-2 — Lịch sử thật
+### FR-CHECKIN-2 — Không seed
 
-- **Không** seed check-in trong demo, Re-fill, hoặc Activity demo.
+- Demo, Re-fill, và Activity demo không tạo check-in.
 
-### FR-CHECKIN-3 — Tách Activity
+### FR-CHECKIN-3 — Không phải Activity
 
-- Check-in **không** thay thế bằng activity; collections khác nhau.
+- Check-in nằm ở `checkIns`, không ghi thay bằng ActivityEvent.
+
+Field `is_demo` trên check-in: **OPEN**.
 
 ## 3. Notes (Ghi chú)
 
-- CRUD; demo `is_demo: true` + ID deterministic; user `false` + ID random.
+- Tạo, sửa, xóa. Demo: `is_demo: true` và ID deterministic. User: `is_demo: false` và ID ngẫu nhiên.
+- Xóa Note xóa các Link có Note đó ở một trong hai đầu. Các Node giữ nguyên.
 
-## 4. Knowledge & Knowledge Map
+## 4. Node và Knowledge Map
 
-### FR-KNOW-1 — Knowledge (Tài liệu)
+### FR-NODE-1 — Một entity tài liệu
 
-- CRUD nội dung trên entity **Knowledge**.
+- CRUD nội dung trên `Node` (`title`, `body`, metadata trong [data-model.md](data-model.md)).
+- UI gọi Node là Tài liệu hoặc Knowledge.
+- Không có màn hình hoặc store nào sửa một bản Knowledge/MapNode riêng.
 
-### FR-KNOW-2 — Node trên map
+### FR-NODE-2 — Knowledge Map
 
-- **Node** chỉ là biểu diễn map của Knowledge (`knowledgeId`); không trùng lặp body.
-- Tạo Knowledge → tạo Node map 1–1 (layout trên Node).
+- Bản đồ hiển thị mọi Node.
+- Bản đồ hiển thị Link có cả `sourceType` và `targetType` là `node`, đúng hướng đã lưu.
+- Không vẽ body thứ hai.
+- Không có lệnh Remove from map.
+- Layout/tọa độ: **OPEN**.
 
-### FR-KNOW-3 — Quan hệ NodeGraphEdge
+### FR-NODE-3 — Xóa Node
 
-- User tạo/xóa edge giữa **Node** (source/target do user chọn).
-- Không prerequisite mặc định; 1-1, 1-N, N-1, N-N qua nhiều bản ghi.
-- **Không** cạnh ngược tự động.
-- **Cấm** AI tạo/gợi ý/sửa edge hoặc NoteKnowledgeLink.
+- Xóa Node đó.
+- Xóa mọi Link có Node đó ở `sourceId` hoặc `targetId`.
+- Giữ Note.
+- Giữ các Node khác.
 
-### FR-KNOW-4 — Xóa
+## 5. Link
 
-- Xóa **edge**: chỉ edge.
-- **Delete Knowledge**: xóa Knowledge, MapNode, edge liên quan, NoteKnowledgeLink trỏ `knowledgeId`; **không** xóa Note.
-- **Remove from map** (nếu có UI): xóa MapNode + edge incident; **giữ** Knowledge và Note.
+### FR-LINK-1 — Bốn chiều
 
-### FR-KNOW-5 — Note ↔ Knowledge
+User tạo được đúng các chiều:
 
-- Link qua `knowledgeId`; tách khỏi NodeGraphEdge.
+- Node → Node
+- Node → Note
+- Note → Node
+- Note → Note
 
-## 5. Chat
+### FR-LINK-2 — Hướng và số lượng
+
+- Một Note hoặc Node có thể nối tới nhiều Note/Node khác.
+- Cùng chiều, cùng cặp: tối đa một Link.
+- User tạo chiều ngược bằng một thao tác riêng thì chiều đó được lưu.
+- Hệ thống không tự tạo chiều ngược.
+- Hướng đã lưu không bị đảo.
+- Không gán nhãn, loại quan hệ, hoặc ý nghĩa. Metadata đó: **OPEN**.
+- Self-link: **OPEN**.
+
+### FR-LINK-3 — Sửa và xóa
+
+- Không có lệnh sửa Link, vì Link không có field nội dung.
+- Xóa Link chỉ xóa record đó. Note và Node ở hai đầu vẫn còn.
+
+### FR-LINK-4 — AI
+
+- AI không tạo, không gợi ý, không sửa, không xóa Link.
+
+## 6. Chat
 
 ### FR-CHAT-1 — Một hội thoại
 
-- Một conversation persisted; không UI tạo/đổi/xóa nhiều conversation; không session ẩn.
+- Một conversation trong `localStorage`.
+- Không có UI tạo, đổi, hoặc xóa nhiều conversation.
+- Không có session ẩn.
 
 ### FR-CHAT-2 — Messages
 
-- Lưu `localStorage`; reload giữ nguyên.
-- Mọi message `is_demo: false` (không seed chat demo).
+- Reload giữ nguyên messages.
+- Mọi message `is_demo: false`.
+- Không seed chat demo.
 
-## 6. AI context selection
+## 7. AI context selection
 
 ### FR-CTX-1 — Lần đầu
 
-- Chọn **tất cả** Note + Knowledge hiện có.
+- Chọn mọi Note và mọi Node hiện có.
+- Sau lần đó, preference đã khởi tạo. Không lặp select-all chỉ vì user mở lại app.
 
-### FR-CTX-2 — Persist & tái sử dụng
+### FR-CTX-2 — User chọn
 
-- User bỏ chọn từng tài liệu; lưu preference; lần sau giữ choice.
+- User bỏ từng tài liệu hoặc bỏ hết.
+- Lần sau giữ đúng tập đó.
 
-### FR-CTX-3 — Đồng bộ thư viện
+### FR-CTX-3 — Đổi thư viện
 
 | Sự kiện | Hành vi |
 |---------|---------|
-| Tạo Note/Knowledge mới | **Thêm** id vào selection (kể cả khi user đã bỏ chọn tất cả trước đó — **không** chọn lại doc cũ) |
-| Xóa tài liệu | Loại id khỏi selection |
-| User bỏ chọn hết | Gửi AI: context thư viện rỗng — **không** silent select-all |
-| Clear / Re-fill Demo | **Không** reset `aiContextSelection` |
-| Re-fill tạo demo mới (id mới) | Coi như doc mới → thêm vào selection; không bật lại doc user đã bỏ chọn |
+| Tạo Note hoặc Node | Thêm ID mới, kể cả khi selection đang rỗng. Không thêm ID user đã bỏ. |
+| Xóa Note hoặc Node | Gỡ ID đó |
+| User bỏ hết | Request sau đó có thư viện rỗng. Không tự chọn lại tất cả. |
+| Clear Demo | Gỡ ID Note/Node demo đã xóa. Giữ ID Note và Node còn tồn tại, gồm lựa chọn user còn sống. |
+| Re-fill tạo Note/Node demo mới | Thêm các ID vừa tạo. Không chọn lại ID đã bỏ. Record skip vì đã tồn tại không được bật lại. |
 
-### FR-CTX-4 — PPL
+### FR-CTX-4 — PPL chỉ thấy tập đã chọn
 
-- Chỉ Note + Knowledge **được chọn** (theo `knowledgeId` / `noteId`) — không đưa map layout vào context trừ khi ADR mở rộng.
+- Context thư viện chỉ gồm Note và Node có ID trong selection.
+- Không đưa layout bản đồ vào context.
+- Không thêm tài liệu ngoài selection để lấp budget.
 
 ### FR-CTX-5 — Token
 
-- Budget và relevance: [prompt-processing-layer.md](prompt-processing-layer.md).
+- Budget, ranking, compression: [prompt-processing-layer.md](prompt-processing-layer.md).
 
-## 7. Gọi AI (client → runtime → Gemini)
+## 8. Gọi AI
 
-- Không API key trên client.
-- Runtime: shared quota; không cam kết per-user quota strict; **có thể** IP rate limit chống lạm dụng.
-- Token/cost guards; lỗi an toàn.
+- Client không giữ API key.
+- Client gửi structured request. Runtime tạo trusted system instructions.
+- Quota shared. Không cam kết quota riêng từng user khi không có auth.
+- Runtime có rate limit, timeout, giới hạn payload, và token/cost guard. Ngưỡng số: **OPEN**.
+- Lỗi hiển thị an toàn, không lộ secret.
+- Câu trả lời chỉ gắn nguồn sau khi runtime validate attribution.
 
-## 8. Activity history
+## 9. Activity
 
-Ghi event (`is_demo: false` cho thao tác user):
+Mỗi thao tác user sau đây tạo một ActivityEvent `is_demo: false`:
 
-- Create/edit/delete Note.
-- Create/edit/delete Knowledge.
-- Create/delete NodeGraphEdge.
-- Create/delete NoteKnowledgeLink.
+- Tạo, sửa, hoặc xóa Note.
+- Tạo, sửa, hoặc xóa Node.
+- Tạo hoặc xóa Link.
 - Gửi câu hỏi AI.
 
-**Không** log view/open điều hướng.
+Không ghi:
 
-Demo có thể seed **Activity** `is_demo: true`; **không** seed check-in.
+- Mở, xem, hoặc điều hướng chỉ đọc.
+- Từng Link bị xóa kèm theo vì xóa Note hoặc xóa Node.
+- Từng record bị xóa hoặc bị dọn vì Clear Demo.
 
-## 9. Local data management
+Demo được phép seed Activity `is_demo: true`. Seed đó không tạo check-in.
 
-| Capability | Requirement |
-|------------|-------------|
+Catalog chuỗi `type`: **OPEN**.
+
+## 10. Dữ liệu local
+
+| Khả năng | Yêu cầu |
+|----------|---------|
 | Schema | [data-model.md](data-model.md) |
-| Clear Demo | Chỉ `is_demo: true`; dọn orphan; không check-in; confirm |
-| Re-fill Demo | **Skip-existing** — chỉ tạo thiếu; không overwrite demo/user |
-| Export/import | JSON; confirm (policy merge: ADR) |
+| Clear Demo | Xóa `is_demo: true`, dọn Link mồ côi, sửa selection như FR-CTX-3, không đụng check-in và chat, có xác nhận, không sinh activity cascade |
+| Re-fill Demo | Skip-existing. Chỉ tạo record thiếu. Không overwrite. Thêm ID demo mới vào selection. Có xác nhận. |
+| Export | JSON root document |
+| Import | Có xác nhận. Replace-all hay merge-by-id: **OPEN**. |
 
-## 10. Demo data
+## 11. Demo data
 
-- Re-fill/Clear theo [data-model.md](data-model.md).
-- Va chạm ID demo/user: không overwrite user.
+- ID demo deterministic. Manifest cụ thể: **OPEN**.
+- ID đụng record đã có: không overwrite, không tạo trùng. Nội dung thông báo: **OPEN**.
 
-## User flows (tóm tắt)
+## User flows
 
-1. Mở app → check-in ngày nếu thiếu → load store.
-2. CRUD Knowledge/Note/map; activity log.
-3. Chọn context AI (persist).
-4. Chat → PPL → runtime.
-5. Export/import; Clear/Re-fill demo (confirm).
+1. Mở app → load, validate, migrate store → nếu store hợp lệ, check-in ngày hiện tại khi chưa có.
+2. CRUD Note, Node, và Link. Activity chỉ cho thao tác user, không cho cascade.
+3. Chọn context AI và giữ preference.
+4. Chat → PPL trên tập đã chọn → runtime → kiểm tra attribution → hiển thị.
+5. Export hoặc import (confirm). Clear Demo hoặc Re-fill Demo (confirm).
 
-**Critical paths:** check-in idempotent theo ngày; Re-fill không đụng user + không overwrite demo existing; empty context không auto-all; doc mới sau deselect-all chỉ thêm doc mới; delete Knowledge không xóa Note.
+**Critical paths:** check-in không chạy trên store hỏng và không trùng trong cùng ngày local; Re-fill không đụng record đã có; selection rỗng không thành select-all; xóa Node không xóa Note; xóa Note hoặc Node không ghi activity giả cho từng Link bị dọn.

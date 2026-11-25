@@ -1,81 +1,112 @@
 # NOTEAI — Prompt Processing Layer (PPL)
 
-Lớp xử lý **trên client** (ưu tiên code deterministic) **trước** khi gọi Managed AI Runtime → Gemini.
+PPL chạy **trên client**, bằng code deterministic, **trước** request sang Managed AI Runtime. Runtime gọi Gemini.
 
 ## Mục tiêu
 
-- Giảm token/cost trong khi bảo toàn ý user và evidence.
-- Ngăn prompt injection từ Notes/Knowledge.
-- Đo lường được chất lượng và mức giảm token.
+- Giảm token và chi phí trong khi giữ ý user và evidence.
+- Giảm rủi ro prompt injection từ Note, Node, và user message.
+- Không biến bước preprocess thành nơi phát hành system instruction.
+- Đo được mức giảm token trên một corpus cố định khi corpus đó đã được chốt.
 
-## Pipeline (thứ tự bắt buộc)
+PPL không bảo đảm loại hết prompt injection.
 
-1. **Input validation & normalization**
-   - Trim whitespace; giới hạn độ dài user message (min/max ký tự — ADR số cụ thể).
-   - Từ chối empty sau normalize (UI validation trước).
-   - Unicode NFC normalize (optional, recommended).
+## Pipeline
 
-2. **Context selection (preference-aware)**
-   - Đọc `aiContextSelection` từ store.
-   - Chỉ include Note/Knowledge **được chọn** (`noteId` / `knowledgeId` — không map layout); nếu không còn ID nào → context thư viện **rỗng** (không fallback all).
-   - Đồng bộ: đã xóa doc → loại khỏi set trước bước này.
+Thứ tự bắt buộc:
 
-3. **Duplicate-content reduction**
-   - Phát hiện đoạn trùng lặp giữa các doc (hash đoạn / shingle đơn giản).
-   - Gộp hoặc bỏ bản duplicate; **giữ** một bản và attribution tới nguồn gốc.
+1. **Validate và normalize input**
+   - User message đưa vào request là bản NFC của nội dung người dùng nhập.
+   - Không trim nội dung được gửi. Không paraphrase, không viết lại.
+   - UI được phép coi message là rỗng khi trim chỉ để chặn gửi. Kết quả trim không thay thế nội dung gốc.
+   - Giới hạn độ dài tối đa: **OPEN**. Khi đã có giới hạn, vượt giới hạn thì từ chối gửi, không cắt lén nội dung.
 
-4. **Relevant-context filtering & token budgeting**
-   - Ước lượng token (heuristic chars/4 hoặc tokenizer ADR chọn).
-   - Budget tổng cho library content: `B_lib` (config; acceptance có ngưỡng test).
-   - Ranking: doc user-selected > keyword overlap với user message > recency (tie-break).
-   - Cắt đuôi ranking khi vượt `B_lib`.
+2. **Context selection**
+   - Đọc `aiContextSelection`.
+   - Chỉ Note và Node có ID trong `includedIds` được vào các bước sau.
+   - Selection rỗng → thư viện rỗng. Không fallback select-all.
+   - ID đã xóa phải đã được gỡ khỏi selection trước bước này.
+   - Không thêm tài liệu chưa chọn để lấp chỗ trống trong budget.
 
-5. **Safe context compression (when necessary)**
-   - Chỉ khi vẫn vượt budget sau bước 4.
-   - Cho phép: đầu+đuôi + ellipsis marker; heading-aware excerpt.
-   - **Cấm**: thêm fact không có trong nguồn; đổi nghĩa câu.
-   - Mọi excerpt giữ `sourceId` + offset/section id cho attribution.
+3. **Deduplicate**
+   - Phát hiện đoạn trùng giữa các tài liệu đã chọn (hash đoạn hoặc shingle).
+   - Được giữ một bản nội dung trùng.
+   - Attribution của **mọi** nguồn bị gộp phải còn trên chunk đó. Dedup không được bỏ nguồn.
 
-6. **Prompt assembly**
-   - Khối **system instructions** (fixed template runtime/client — không user-editable từ library).
-   - Khối **library context** (untrusted, delimited, ví dụ `<library source="note:id">...</library>`).
-   - Khối **user message** (nguyên văn sau normalize — không rewrite ý).
-   - Thứ tự và delimiter **cố định** trong code (versioned `pplVersion`).
+4. **Chunk và truy xuất nguồn**
+   - Chia phần thư viện còn lại thành chunk.
+   - Mỗi chunk trỏ được về Note hoặc Node nguồn và về vị trí excerpt trong body nguồn.
+   - Tên field locator cụ thể thuộc HTTP contract: **OPEN**. Khả năng truy ngược là bắt buộc.
 
-7. **Source attribution & evidence preservation**
-   - Output metadata kèm request: danh sách `{ id, type: note|knowledge, excerptRef? }` đã đưa vào prompt.
-   - UI hiển thị nguồn tham chiếu cho câu trả lời (FR product).
+5. **Ranking trong tập đã chọn**
+   - Chỉ rank các chunk từ bước 2–4.
+   - Trong tập đó: keyword overlap với user message, rồi recency của tài liệu nguồn để phá hòa.
+   - Tài liệu user không chọn không có hạng và không được kéo vào.
 
-## Ràng buộc an toàn
+6. **Compression khi vượt budget**
+   - Ước lượng token bằng heuristic hoặc tokenizer. Cách ước lượng cụ thể: **OPEN**, cùng `B_lib`.
+   - Nếu tổng library vượt `B_lib`, nén deterministic, ưu tiên extractive.
+   - Được phép: excerpt nguyên văn, đầu và đuôi kèm dấu lược bỏ, excerpt theo heading nếu heading có trong nguồn.
+   - Cấm: thêm fact, đổi nghĩa, tóm tắt suy diễn.
+   - Chunk sau nén vẫn trỏ đủ mọi nguồn đã gắn ở bước 3 và 4.
 
-| Ràng buộc | Mô tả |
-|-----------|--------|
-| Intent preservation | User message không bị paraphrase trước model |
-| Untrusted library | Notes/Knowledge **không** được coi là system instruction |
-| No override | Library không thể override system block (delimiter + policy runtime) |
-| No invention | Compression không thêm thông tin |
-| Deterministic first | Bước 1–6 không gọi thêm model chỉ để preprocess (trừ future ADR explicit) |
+7. **Re-estimate**
+   - Ước lượng lại token library sau compression.
 
-## Token / cost controls
+8. **Cắt chunk ưu tiên thấp**
+   - Nếu vẫn vượt `B_lib`, bỏ chunk hạng thấp cho đến khi nằm trong budget hoặc thư viện hết chunk.
+   - Không thay chunk đã bỏ bằng tài liệu ngoài selection.
 
-- `B_lib` + cap message user + cap response (runtime) cộng hưởng.
-- Log nội bộ client (dev): `tokensEstimatedBefore`, `tokensEstimatedAfter` mỗi request (không bắt buộc persist user).
+9. **Assemble structured request**
+   - Payload gồm: `pplVersion`, user message đã NFC, các chunk còn lại, attribution của từng chunk.
+   - Không có system instruction có thẩm quyền.
+   - Không có khối “system” do client soạn để runtime phải tuân theo.
+   - Delimiter, nếu có trong biểu diễn text của một chunk, chỉ ngăn cách dữ liệu.
 
-## Acceptance criteria (PPL)
+10. **Runtime**
+    - Validate request.
+    - Tự tạo trusted system instructions.
+    - Gọi Gemini.
+    - Note, Node, và user message vẫn là untrusted input ở phía runtime.
 
-Xem chi tiết số liệu: [acceptance-criteria.md](acceptance-criteria.md). Tóm tắt:
+11. **Attribution của response**
+    - Runtime kiểm tra nguồn mà response gắn vào.
+    - Client chỉ hiển thị nguồn đã qua kiểm tra.
+    - Nguồn không nằm trong request, hoặc không truy được về chunk đã gửi, không được trình bày như evidence.
 
-- Với fixture corpus chuẩn (định nghĩa trong repo app test), **median** giảm token library ≥ **30%** sau bước 3–5 so với nối thô full selected docs (cùng selection).
-- **100%** request với empty selection: payload library **length 0** (không silent all).
-- **0** case test injection: chuỗi `Ignore previous instructions` trong Note **không** xuất hiện trong system block.
-- Mọi chunk trong prompt library có ≥ 1 `sourceId` trong attribution metadata.
-- User message byte-identical (sau NFC) giữa input UI và assembled prompt.
+Bước 1–9 không gọi model khác để preprocess.
 
-## Versioning
+## Ràng buộc
 
-- `pplVersion` integer trong client; thay đổi assembly breaking → bump + migration không bắt buộc (runtime stateless).
+| Ràng buộc | Quy tắc |
+|-----------|---------|
+| Intent | User message trong request bằng NFC của input. Không trim, không viết lại. |
+| Selection | Tập đã chọn là chặn cứng. |
+| Untrusted | Note, Node, user message không phải system instruction. |
+| System prompt | Chỉ runtime tạo bản có thẩm quyền. |
+| Delimiter | Cấu trúc dữ liệu, không phải security boundary. |
+| Dedup | Giữ attribution của tất cả nguồn bị gộp. |
+| Compression | Extractive. Không bịa và không đổi nghĩa. |
+| Injection | Preprocess trên client chỉ giảm rủi ro. |
+| Version | `pplVersion` đi cùng request. Đổi assembly breaking thì tăng version. Runtime stateless nên không bắt buộc migration phía server. |
 
-## Open (ADR app)
+## Token
 
-- Giá trị `B_lib` mặc định và max user message length.
-- Fixture corpus cho test regression PPL.
+- `B_lib` cộng với trần user message và trần response phía runtime.
+- Giá trị số: **OPEN**.
+- Log dev được phép có `tokensEstimatedBefore` và `tokensEstimatedAfter`. Không bắt buộc lưu log đó vào store của user.
+
+## Acceptance
+
+Chi tiết: [acceptance-criteria.md](acceptance-criteria.md).
+
+- Median token library giảm tối thiểu 30% so với nối thô đúng các tài liệu đã chọn, trên fixture corpus cố định. Corpus: **OPEN**.
+- Selection rỗng → độ dài phần library trong payload bằng 0.
+- Mọi chunk còn lại truy được về nguồn đã chọn. Chunk gộp truy được về mọi nguồn bị gộp.
+- User message trong request là NFC của input, không phải bản đã trim.
+
+## Open
+
+- `B_lib`, estimator, trần độ dài user message, trần response
+- HTTP schema, gồm tên field locator
+- Fixture corpus và bộ đo median

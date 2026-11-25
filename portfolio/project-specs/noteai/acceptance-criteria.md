@@ -1,92 +1,121 @@
 # NOTEAI — Acceptance criteria
 
-Tiêu chí có thể kiểm thử. Mirror vào repo app khi scaffold.
+Tiêu chí kiểm thử cho spec hiện tại. Mirror vào repo app khi scaffold. Ngưỡng số và fixture đang **OPEN** thì test đó chưa chạy được cho đến khi có quyết định; tiêu chí vẫn là yêu cầu.
 
-## Demo & user data safety
+## Demo và dữ liệu user
 
 | ID | Given | When | Then |
 |----|-------|------|------|
-| AC-DEMO-1 | User + demo records | Re-fill confirm | Mọi record `is_demo:false` byte-identical |
-| AC-DEMO-2 | Demo id đã tồn tại `is_demo:true` | Re-fill | Record demo **không đổi** (skip-existing) |
-| AC-DEMO-3 | Sau Clear Demo | Re-fill | Demo thiếu được tạo; deterministic ids |
-| AC-DEMO-4 | User + demo | Clear Demo | Không còn `is_demo:true` entity; user còn |
-| AC-DEMO-5 | Any | Re-fill / demo seed | `checkIns` count không tăng |
-| AC-DEMO-6 | Demo id trùng user record `is_demo:false` | Re-fill | User record còn; demo skip; collision logged |
-| AC-DEMO-7 | User had deselected all | Re-fill adds new demo ids only | `aiContextSelection` không select-all; chỉ id demo mới trong set nếu policy doc mới |
+| AC-DEMO-1 | Có record user và demo | Re-fill đã confirm | Mọi record `is_demo: false` giữ nguyên từng field |
+| AC-DEMO-2 | Demo ID đã tồn tại với `is_demo: true` | Re-fill | Record đó không đổi |
+| AC-DEMO-3 | Sau Clear Demo, manifest demo còn định nghĩa các ID đã mất | Re-fill | Các record thiếu được tạo lại, `is_demo: true`, đúng ID deterministic |
+| AC-DEMO-4 | Có user và demo | Clear Demo đã confirm | Không còn Note, Node, Link, ActivityEvent `is_demo: true`. Record user còn. |
+| AC-DEMO-5 | Bất kỳ | Re-fill hoặc seed demo | Số check-in không tăng |
+| AC-DEMO-6 | ID demo trùng record đang có | Re-fill | Record cũ còn. Không có record thứ hai cùng ID. |
+| AC-DEMO-7 | Link user nối vào Node demo, và Link demo giữa hai Node user | Clear Demo | Link demo biến mất. Link user trỏ vào Node đã xóa biến mất. Link giữa các record user còn lại thì còn. |
+
+Thông báo va chạm ID: **OPEN**, không có AC về câu chữ.
 
 ## Check-in
 
 | ID | Given | When | Then |
 |----|-------|------|------|
-| AC-CHK-1 | No check-in day D | App init | Exactly one row `date=D` |
-| AC-CHK-2 | Check-in exists D | Reload same day | Count for D unchanged |
-| AC-CHK-3 | Local date → D2 | Init / visible tab | ≤1 check-in D2 |
-| AC-CHK-4 | Tab hidden overnight | Visible next local day | At most one new check-in for new day |
+| AC-CHK-1 | Store hợp lệ, chưa có check-in ngày D | App init | Đúng một check-in `date=D` |
+| AC-CHK-2 | Đã có check-in ngày D | Reload cùng ngày | Số check-in ngày D không đổi |
+| AC-CHK-3 | Ngày local sang D2 | Init hoặc tab visible | Tối đa một check-in ngày D2 |
+| AC-CHK-4 | Tab ẩn qua đêm | Visible ở ngày local mới | Tối đa một check-in mới cho ngày mới |
+| AC-CHK-5 | JSON hỏng hoặc migration/validate thất bại | App init | Có recovery. Không tạo check-in trên lần load đó. |
+| AC-CHK-6 | Store hợp lệ | Init | Load, validate, và migrate xong trước khi ghi check-in |
 
-## Knowledge, Node, relationships
+Có field `is_demo` trên check-in hay không: **OPEN**. Không có AC khẳng định field đó tồn tại hoặc không tồn tại.
+
+## Node
 
 | ID | Given | When | Then |
 |----|-------|------|------|
-| AC-KNOW-1 | Knowledge K | Inspect store | One MapNode with `knowledgeId=K.id`; no duplicate body on Node |
-| AC-REL-1 | Edge A→B | — | No auto B→A |
-| AC-REL-2 | Edge exists | Delete edge | Knowledge, Notes, Nodes remain |
-| AC-REL-3 | Knowledge K + links | Delete K | K, node, related edges/links gone; Notes remain |
-| AC-REL-4 | Map node only | Remove from map (if UI) | Knowledge remains; incident edges removed |
-| AC-REL-5 | — | AI chat | No graph/link mutation |
+| AC-NODE-1 | Một tài liệu với title và body | Đọc store và bản đồ | Nội dung chỉ nằm trên một `Node`. Store không có `knowledge`, `mapNodes`, `nodeGraphEdges`, `noteKnowledgeLinks`. Bản đồ không có body thứ hai. |
+| AC-NODE-2 | Node N và Note khác | Xóa N | N mất. Note còn. Mọi Link có N ở một đầu đều mất. |
+| AC-NODE-3 | Mọi Node hiện có | Mở Knowledge Map | Mọi Node đều có mặt. Không có lệnh Remove from map. |
+
+## Link
+
+| ID | Given | When | Then |
+|----|-------|------|------|
+| AC-LINK-1 | Note và Node đủ để làm đầu mút | Tạo lần lượt bốn chiều | Store có Node→Node, Node→Note, Note→Node, Note→Note |
+| AC-LINK-2 | Đã có Link A→B cùng type | Tạo lại đúng `sourceType`, `sourceId`, `targetType`, `targetId` | Vẫn một Link. Không có bản trùng chiều. |
+| AC-LINK-3 | Đã có A→B | User tạo B→A | Có hai Link. Hướng của từng record giữ nguyên. |
+| AC-LINK-4 | Chưa có chiều ngược | Tạo một chiều | Không xuất hiện record chiều ngược |
+| AC-LINK-5 | Có Link | Xóa Link đó | Chỉ Link đó mất. Note và Node còn. |
+| AC-LINK-6 | Có thư viện và chat | Hoàn tất một lượt AI | Số Note, Node, và Link không đổi vì lượt AI đó |
 
 ## Chat
 
 | ID | Given | When | Then |
 |----|-------|------|------|
-| AC-CHAT-1 | Messages stored | Reload | Same messages |
-| AC-CHAT-2 | UI inspection | — | No multi-conversation controls |
+| AC-CHAT-1 | Đã có messages | Reload | Cùng messages, mọi `is_demo` là false |
+| AC-CHAT-2 | Mở UI chat | — | Không có điều khiển nhiều conversation |
 
 ## AI context
 
 | ID | Given | When | Then |
 |----|-------|------|------|
-| AC-CTX-1 | 3 docs, first use | Send AI | PPL includes 3 |
-| AC-CTX-2 | User unselected all, saved | Send AI | Library context empty |
-| AC-CTX-3 | User selected subset | Send AI | Only selected ids |
-| AC-CTX-4 | User unselected all, creates new Note | Send AI | PPL includes **only** new Note id |
-| AC-CTX-5 | Custom selection | Clear Demo | `aiContextSelection` unchanged |
-| AC-CTX-6 | Custom selection | Re-fill Demo | `aiContextSelection` unchanged |
+| AC-CTX-1 | 2 Note và 1 Node, chưa khởi tạo selection | Gửi AI | PPL gồm đúng 3 ID đó |
+| AC-CTX-2 | User bỏ hết và đã lưu | Gửi AI | Phần library trong payload dài 0 |
+| AC-CTX-3 | User giữ một tập con | Gửi AI | Chỉ các ID còn trong `includedIds` |
+| AC-CTX-4 | User bỏ hết, rồi tạo một Note mới | Gửi AI | Library chỉ có Note mới |
+| AC-CTX-5 | Selection có Node user U và Node demo D. User đã bỏ Node X. | Clear Demo | U còn trong selection. D không còn. X không bị chọn lại. Không thành select-all. |
+| AC-CTX-6 | User đã bỏ Node Y. Re-fill sẽ tạo Node demo mới Z và skip demo đã có. | Re-fill | Y vẫn ngoài selection. Z được thêm. ID bị skip không được bật lại nếu user đã bỏ nó. |
 
-## PPL — cost, quality, safety
+AC-CTX-5 áp dụng cùng quy tắc cho Note demo và Note user.
 
-| ID | Criterion | Test approach |
-|----|-----------|---------------|
-| AC-PPL-1 | Median token library −30% vs raw concat | Fixture (ADR corpus) |
-| AC-PPL-2 | Empty selection → 0 library in payload | Unit |
-| AC-PPL-3 | Injection in Note stays in library block only | Snapshot |
-| AC-PPL-4 | Each library segment has `sourceId` | Metadata |
-| AC-PPL-5 | User message unchanged (post-NFC) | String compare |
-| AC-PPL-6 | Compression excerpt ⊆ source | Diff |
+## PPL
+
+| ID | Criterion | Cách kiểm |
+|----|-----------|-----------|
+| AC-PPL-1 | Median token library giảm ≥ 30% so với nối thô cùng tập đã chọn | Fixture. Corpus **OPEN** nên test này chưa đủ dữ liệu để chạy. |
+| AC-PPL-2 | Selection rỗng → library length 0, kể cả khi store còn tài liệu | Unit |
+| AC-PPL-3 | Note chứa `Ignore previous instructions` | Chuỗi đó không nằm trong trusted system instructions. Client request không chứa system instruction có thẩm quyền. |
+| AC-PPL-4 | Chunk đơn và chunk sau dedup | Mỗi chunk truy về đúng body đã chọn. Chunk gộp còn attribution của mọi nguồn bị gộp. |
+| AC-PPL-5 | Input có khoảng trắng đầu/cuối và ký tự cần NFC | Request mang NFC của nguyên văn. Không phải chuỗi đã trim. |
+| AC-PPL-6 | Tài liệu dài vượt budget | Excerpt sau compression là đoạn của nguồn. Không có fact mới. |
+| AC-PPL-7 | Budget còn trống và một tài liệu không được chọn | Tài liệu đó vắng trong payload |
+| AC-PPL-8 | Library vẫn vượt budget sau compression | Re-estimate, rồi bỏ chunk hạng thấp cho đến khi vào budget hoặc hết chunk. Compression xảy ra trước lần cắt này. |
+| AC-PPL-9 | Response gắn nguồn ngoài request | UI không hiển thị nguồn đó như evidence |
 
 ## Local storage
 
 | ID | Given | When | Then |
 |----|-------|------|------|
-| AC-LS-1 | Valid export | Import replace confirm | Round-trip per ADR policy |
-| AC-LS-2 | Corrupt JSON | Load | Recovery UX |
-| AC-LS-3 | QuotaExceeded | Save | Error visible; pre-save state intact |
+| AC-LS-1 | Store hợp lệ | Export | JSON có `schemaVersion`, `notes`, `nodes`, `links`, và không có collection đã rút |
+| AC-LS-2 | File export và user confirm | Import | Hành vi khớp policy import sau khi policy được chốt. Replace-all và merge-by-id đều chưa được AC này chọn. |
+| AC-LS-3 | JSON hỏng | Load | Recovery. Dữ liệu tốt trước đó không bị ghi đè bởi parse rỗng. Check-in không được tạo trên lần thất bại. |
+| AC-LS-4 | `QuotaExceeded` lúc save | Save | User thấy lỗi. Trạng thái trước save còn. |
 
-## Runtime / security
+## Runtime
 
 | ID | Criterion |
 |----|-----------|
-| AC-RT-1 | Frontend bundle không chứa Gemini API key material |
-| AC-RT-2 | 429 / quota errors không lộ server internals |
+| AC-RT-1 | Bundle frontend không chứa Gemini API key |
+| AC-RT-2 | Lỗi 429, timeout, payload, và quota không lộ secret hoặc stack server |
+| AC-RT-3 | Request từ client không chứa trusted system instructions. Runtime tự gắn system instructions trước khi gọi Gemini. |
+| AC-RT-4 | Sau nhiều lượt chat, runtime không có store Note, Node, Link, chat, check-in, hay selection |
+| AC-RT-5 | Attribution trên response được kiểm tra trước khi UI gắn nguồn |
+| AC-RT-6 | Request vượt timeout hoặc payload limit bị từ chối với lỗi an toàn trên client |
+
+Ngưỡng timeout, payload, và quota: **OPEN**.
 
 ## Activity
 
 | ID | Given | When | Then |
 |----|-------|------|------|
-| AC-ACT-1 | — | Open Note read-only | No activity |
-| AC-ACT-2 | — | Edit Knowledge | Activity with `is_demo:false` |
-| AC-ACT-3 | — | Create NoteKnowledgeLink | Activity create link |
-| AC-ACT-4 | Demo activity seeded | — | Events có thể `is_demo:true` |
+| AC-ACT-1 | Có Note | Mở Note chỉ để đọc | Không thêm ActivityEvent |
+| AC-ACT-2 | Có Node | Sửa Node | Đúng một event user, `is_demo: false` |
+| AC-ACT-3 | Hai record | Tạo một Link | Đúng một event tạo Link |
+| AC-ACT-4 | Seed demo | Sau seed | Activity demo được phép `is_demo: true`. Check-in không tăng. |
+| AC-ACT-5 | Store đang chạy | Tạo Note, xóa Note, tạo Node, xóa Node, xóa Link, gửi câu hỏi AI | Mỗi thao tác có đúng một event của chính nó |
+| AC-ACT-6 | Node có nhiều Link | Xóa Node | Một event xóa Node. Không có event xóa cho từng Link bị dọn. |
+| AC-ACT-7 | Có demo và user | Clear Demo | Không thêm event xóa cho từng record demo hoặc từng Link mồ côi |
 
-## ADR placeholders
+## Chưa thành AC hành vi
 
-- `B_lib`, max message length, runtime contract, collision UX copy.
+Các mục **OPEN** trong [product-constraints.md](product-constraints.md) không được một AC ở trên chọn hộ: field `is_demo` của check-in, framework, host, `B_lib`, độ dài message, HTTP schema, demo ID manifest, import replace hay merge, câu chữ va chạm ID, corpus PPL, metadata Link, self-link, layout bản đồ, storage key, catalog `ActivityEvent.type`.
