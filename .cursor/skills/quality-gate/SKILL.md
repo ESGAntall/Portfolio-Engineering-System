@@ -1,30 +1,30 @@
 ---
 name: quality-gate
-description: Evidence-based done/ship/merge/release — checklist theo phạm vi task nhỏ/lớn; PASS, BLOCKED, NOT RUN. Dùng khi user báo done, ship, merge, release, hoàn thành tính năng, hoặc báo cáo kết quả implementation.
+description: Evidence-based done/ship/merge/release — checklist theo phạm vi; PASS, BLOCKED, NOT RUN. Dùng khi user báo done, ship, merge, release, hoàn thành tính năng, hoặc báo cáo implementation.
 ---
 
 # Quality Gate
 
 ## Mục đích
 
-Hoàn thành có **bằng chứng**, phù hợp **phạm vi** thay đổi — không checklist toàn repo cho task cục bộ.
+Hoàn thành có **bằng chứng**, phù hợp **phạm vi** — trong **application repository**.
 
-Trigger cũng từ rule `10-workflow-and-approval` (báo cáo hoàn thành).
+Trigger: rule `10-workflow-and-approval.mdc`.
 
 ## Khi nào kích hoạt
 
-- User: done, ship, merge, release, hoàn thành tính năng, báo cáo kết quả implementation (hoặc tương đương).
+- User: done, ship, merge, release, hoàn thành tính năng, báo cáo kết quả implementation.
 - Kết thúc slice `engineering-workflow`.
-- Thay đổi rule/skill/doc portfolio (consistency gate).
 
 ## Khi nào không kích hoạt
 
 - Giữa chừng implement.
-- Chỉ brainstorm/plan (orchestrator phase).
+- Chỉ brainstorm/plan.
+- Thay đổi **portfolio meta repository** (rules/skills/registry toàn portfolio) → dùng checklist trong rule `90-portfolio-meta-local.mdc` **trong meta repo**, không skill này.
 
 ## Input
 
-- Classification task **nhỏ** | **lớn** (hoặc suy từ phạm vi).
+- Task nhỏ | lớn (từ phạm vi).
 - AC / diff thực tế.
 - Lệnh verify: `docs/testing/`, CI, rule `30-quality-gates.mdc`.
 
@@ -32,43 +32,23 @@ Trigger cũng từ rule `10-workflow-and-approval` (báo cáo hoàn thành).
 
 ### Task nhỏ
 
-- Scope recap vs AC.
-- Chạy verify **liên quan** (lint/test/build document cho phần đụng).
-- Không bắt buộc full regression suite trừ khi thay đổi đụng critical path.
+- Scope vs AC; verify **liên quan**; không bắt buộc full suite trừ critical path.
 
 ### Task lớn / ship / release
 
-- Trên, cộng regression (product doc / user), CI nếu trong scope, docs/CHANGELOG theo policy.
+- Trên + regression (`docs/product/` / user), CI trong scope, docs/CHANGELOG theo policy.
 
 ### Không liên quan → bỏ qua
 
-- Ví dụ: chỉ sửa markdown portfolio → không chạy e2e app; vẫn NOT RUN hoặc manual check nếu cần.
+- Ví dụ chỉ doc → không ép e2e.
 
-## Trạng thái (bắt buộc)
+## Trạng thái
 
-| Status | Ý nghĩa |
-|--------|---------|
-| **PASS** | Đã chạy/kiểm với evidence (command output, cite kiểm tra) |
-| **BLOCKED** | Đã chạy, fail, hoặc thiếu điều kiện ship |
-| **NOT RUN** | Chưa thực hiện — **không** coi là PASS |
+**PASS** | **BLOCKED** | **NOT RUN** — NOT RUN không được coi là PASS.
 
-Verdict tổng: **PASS** chỉ khi mọi item **bắt buộc cho scope** là PASS; có BLOCKED → verdict blocked; NOT RUN trên item bắt buộc → không verdict PASS.
+Verdict **PASS** chỉ khi mọi item bắt buộc cho scope là PASS.
 
-## Quy trình
+## Output
 
-1. Scope recap + phân loại nhỏ/lớn.
-2. Liệt kê gate items **phù hợp scope** (không liệt kê thừa).
-3. Chạy hoặc đánh dấu NOT RUN có lý do.
-4. Regression/docs nếu scope yêu cầu.
-5. Bảng: gate item | status | evidence.
-6. Verdict + debt/blocker.
-
-## Output bắt buộc
-
-- Bảng gate với PASS | BLOCKED | NOT RUN.
-- Không tuyên bố PASS cho kiểm tra chưa thực hiện.
-
-## Phối hợp
-
-- Fail → `engineering-workflow` hoặc debug.
-- Impact chưa cover → `codebase-graph` / thêm test.
+- Bảng gate | status | evidence.
+- Verdict + debt/blocker.

@@ -1,5 +1,5 @@
 ---
-description: Baseline context và nguyên tắc chung cho mọi project trong portfolio (scope repo, hybrid design, bảo toàn tính năng).
+description: Baseline context và nguyên tắc chung (scope repo, hybrid design, bảo toàn tính năng) — portable trong app repo.
 alwaysApply: true
 ---
 
@@ -7,27 +7,27 @@ alwaysApply: true
 
 ## Scope
 
-- Làm việc trong **một repository ứng dụng cụ thể** trừ khi task rõ ràng thuộc `portfolio-engineering-system`.
-- Không giả định ngôn ngữ, framework hoặc kiến trúc chung giữa các app.
+- Làm việc trong **repository hiện tại** (application repository khi đã bootstrap).
+- Không giả định ngôn ngữ, framework hoặc kiến trúc chung với project khác.
 
 ## Nguyên tắc thiết kế (Hybrid Design System)
 
-- Tuân theo **tiêu chuẩn chung** trong `portfolio/design-principles.md` và tài liệu design-system của project.
+- Tuân **baseline** trong `docs/reference/design-principles.md` và `docs/design-system/` của project.
 - Mỗi sản phẩm có **art direction riêng**; không ép một theme/visual duy nhất.
-- UI mới phải tương thích với documented patterns của project đó.
+- UI mới phải tương thích với documented patterns của project.
 
 ## Bảo toàn tính năng
 
-- Redesign hoặc refactor **không được** làm mất hành vi đã ship trừ khi user/product ghi rõ deprecation.
+- Redesign hoặc refactor **không được** làm mất hành vi đã ship trừ khi `docs/product/` ghi deprecation.
 - Liệt kê regression risk trước khi đổi luồng người dùng hoặc API công khai.
 
 ## Kỹ thuật chung
 
-- Đọc `README.md`, `docs/architecture/`, và ADR trong `docs/decisions/` trước khi thay đổi lớn.
+- Đọc `README.md`, `docs/architecture/`, ADR trong `docs/decisions/` trước thay đổi lớn.
 - Ưu tiên diff tối thiểu, khớp convention hiện có trong repo.
-- Quyết định kiến trúc chưa rõ → ghi ADR hoặc cập nhật docs; **không** tự suy diễn và cứng hóa trong code.
+- Quyết định chưa rõ → ghi ADR hoặc cập nhật docs; **không** tự suy diễn và cứng hóa trong code.
 
-## Tham chiếu portfolio
+## Tham chiếu project
 
-- Registry và chuẩn: `portfolio/portfolio-registry.md`, `portfolio/engineering-standards.md`.
-- Skill điều phối: `requirement-orchestrator` khi scope task chưa rõ hoặc task lớn.
+- Identity / remote (nếu cần): `docs/reference/project-context.md`
+- Skill điều phối: `requirement-orchestrator` khi scope chưa rõ hoặc task lớn.

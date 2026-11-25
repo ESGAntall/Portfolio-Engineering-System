@@ -25,8 +25,17 @@ Meta-repository: AI engineering workflow, Cursor Rules, Cursor Skills, chuẩn v
 ## Bắt đầu nhanh
 
 1. [engineering-standards.md](portfolio/engineering-standards.md), [design-principles.md](portfolio/design-principles.md).
-2. App mới: [project-template/README.md](project-template/README.md) — copy rules/skills.
+2. App mới: `node cli/bin/portfolio.js create <name>` — xem [cli/README.md](cli/README.md).
 3. Task mơ hồ hoặc lớn → skill **requirement-orchestrator**.
+
+## Local CLI (v0.1)
+
+| Command | Mô tả |
+|---------|--------|
+| `create` | Bootstrap app repo vào `projects/<name>` hoặc `--path` |
+| `verify` | Manifest + distributed files |
+| `doctor` | Portfolio / project health |
+| `info` | Version và distribution summary |
 
 ## Registry
 

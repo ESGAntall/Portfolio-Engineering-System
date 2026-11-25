@@ -1,5 +1,5 @@
 ---
-description: Hybrid UI/UX — chuẩn portfolio + art direction product; áp dụng khi chỉnh source UI, design tokens, hoặc docs design-system.
+description: Hybrid UI/UX — baseline + art direction product; áp dụng khi chỉnh source UI hoặc docs design-system.
 globs: "**/*.tsx,**/*.jsx,**/*.vue,**/*.svelte,**/*.css,**/*.scss,**/docs/design-system/**"
 alwaysApply: false
 ---
@@ -8,12 +8,12 @@ alwaysApply: false
 
 ## Hai lớp
 
-1. **Portfolio layer**: accessibility, hierarchy, feedback, error states, responsive baseline — `portfolio/design-principles.md`.
+1. **Portfolio layer (reference)**: accessibility, hierarchy, feedback, error states, responsive baseline — `docs/reference/design-principles.md`.
 2. **Product layer**: art direction, brand, motion, density — `docs/design-system/` của project.
 
 ## Framework khác
 
-Glob mặc định cover web component styles phổ biến. Stack khác (vd. `.qml`, `.ui`, template engine) → bổ sung glob trong **`99-project-local.mdc`**, giữ `alwaysApply: false`.
+Glob mặc định cover web component styles phổ biến. Stack khác (vd. `.qml`, `.ui`) → bổ sung glob trong **`99-project-local.mdc`**.
 
 ## Khi redesign
 
@@ -22,8 +22,8 @@ Glob mặc định cover web component styles phổ biến. Stack khác (vd. `.q
 
 ## Kích hoạt skill
 
-- Layout/component/visual language → `frontend-design` và/hoặc `portfolio-design-system`.
-- Chuẩn chung portfolio → `portfolio-design-system`.
+- Layout/component/visual language → `frontend-design`.
+- Chuẩn chung portfolio (chỉ khi sửa **reference** design principles hoặc đồng bộ baseline) → cập nhật `docs/reference/design-principles.md` + ADR project nếu cần; skill `portfolio-design-system` **chỉ** trong portfolio meta repo.
 
 ## Tránh
 

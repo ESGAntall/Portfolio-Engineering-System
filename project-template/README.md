@@ -5,18 +5,26 @@ Skeleton cho **một Git repository ứng dụng độc lập** trong portfolio 
 - **Không** bắt buộc backend, database, hay framework — ghi trong `docs/architecture/` khi phân tích project.
 - Ràng buộc của app khác (vd. NOTEAI) **không** áp dụng mặc định cho repo mới.
 
-Phân phối rules/skills: **ADR O-001** (`portfolio-engineering-system/docs/decisions/O-001-...`) — **copy** từ portfolio; sync script versioned **sau này** (chưa có).
+**Bootstrap khuyến nghị:** Portfolio Local CLI từ portfolio meta repo (O-001 COPY):
+
+```bash
+node cli/bin/portfolio.js create <project-name>
+node cli/bin/portfolio.js create <name> --path "<custom-dir>"
+```
+
+CLI copy template + rules 00–30 + skills + canonical `docs/reference/` (policy). Scaffold `docs/reference/project-context.md` đi kèm template.
 
 ## Bootstrap checklist
 
-1. Tạo repository mới; copy toàn bộ `project-template/` vào root (gồm `.gitignore` generic).
-2. **`.gitignore` (bắt buộc):** làm theo [docs/engineering/gitignore.md](docs/engineering/gitignore.md) **trước** cài dependency / build — adapt stack; báo rule generic vs stack-specific.
-3. **Copy** `.cursor/rules/` (00–30) và `.cursor/skills/` từ `portfolio-engineering-system` vào app repo (source of truth = portfolio).
-4. Giữ/chỉnh `99-project-local.mdc` — **không** bị sync tương lai ghi đè.
-5. Đổi `README.md` app — tên, mô tả, lệnh dev khi đã có stack.
-6. Đăng ký trong `portfolio/portfolio-registry.md` (trong portfolio meta repo).
-7. Điền `docs/product/`, `docs/architecture/`, `docs/design-system/`, `docs/testing/`, `docs/decisions/`.
-8. **Code graph** (khi đã có source): **ADR O-002** — Graphify ưu tiên; kiểm tra Python/uv/pipx trước khi đề xuất cài; điền `code-graph.md` + manifest. **Không** cài Graphify chỉ từ bước copy template.
+1. Chạy `create` (hoặc copy thủ công chỉ khi không dùng CLI — xem [cli/README.md](../cli/README.md)).
+2. **`.gitignore` (bắt buộc):** [docs/engineering/gitignore.md](docs/engineering/gitignore.md) **trước** cài dependency / build.
+3. `git init` (**thủ công**).
+4. Điền [docs/reference/project-context.md](docs/reference/project-context.md); kiểm tra `.portfolio/manifest.json`.
+5. Giữ/chỉnh `99-project-local.mdc` — **không** bị sync tương lai ghi đè.
+6. Đổi `README.md` app — tên, mô tả, lệnh dev khi đã có stack.
+7. Đăng ký app (thao tác trong **portfolio meta repo** khi có quyền truy cập).
+8. Điền `docs/product/`, `docs/architecture/`, `docs/design-system/`, `docs/testing/`, `docs/decisions/`.
+9. **Code graph** (khi có source): [docs/reference/O-002-codebase-graph.md](docs/reference/O-002-codebase-graph.md); điền `code-graph.md` + manifest.
 
 ## Skills
 

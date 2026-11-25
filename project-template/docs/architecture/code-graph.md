@@ -1,6 +1,6 @@
 # Code graph
 
-Portfolio policy: **ADR O-002** — file `docs/decisions/O-002-codebase-graph.md` trong repo `portfolio-engineering-system` (có thể sao chép summary vào `docs/decisions/` của app).
+Policy: [docs/reference/O-002-codebase-graph.md](../reference/O-002-codebase-graph.md). Chi tiết vận hành: file này + `.cursor/code-graph-manifest.json`.
 
 ## Policy
 

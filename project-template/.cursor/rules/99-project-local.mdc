@@ -12,7 +12,7 @@ alwaysApply: false
 
 ## Rules portfolio
 
-Copy rules 00–30 từ `portfolio-engineering-system` (O-001).
+Khi bootstrap: copy rules 00–30 và distributable skills từ portfolio meta repo (O-001, **không** rule 90, **không** `portfolio-design-system`). Sau đó làm việc chỉ cần repo app + `docs/reference/`.
 
 ## UI globs bổ sung (rule 20)
 

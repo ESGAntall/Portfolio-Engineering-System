@@ -85,7 +85,7 @@ Child repo **history và remote** độc lập; portfolio không track app sourc
 ## Rules & skills distribution — [O-001](../docs/decisions/O-001-skills-and-rules-distribution.md)
 
 - Portfolio repo = **source of truth** cho `.cursor/rules/` và `.cursor/skills/` chuẩn.
-- App mới: **copy** từ `project-template/` + copy rules/skills từ portfolio khi bootstrap.
+- App mới: **COPY** qua Local CLI `node cli/bin/portfolio.js create` (v0.1) hoặc thủ công tương đương — `project-template/` + rules/skills + canonical `docs/reference/`; manifest `.portfolio/manifest.json`.
 - Project chạy **độc lập** sau copy.
 - **Versioned sync script**: planned, chưa triển khai; khi có, sync **không ghi đè** tùy biến local (`99-project-local.mdc`, skills/rules chỉnh riêng).
 - **Không** mirror skills vào `~/.cursor/skills/`.

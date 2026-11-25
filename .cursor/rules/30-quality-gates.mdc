@@ -1,12 +1,12 @@
 ---
-description: Quality gates — verify, evidence, PASS/BLOCKED/NOT RUN; glob kích hoạt khi đụng test docs, source phổ biến hoặc CI. Chi tiết checklist qua skill quality-gate.
+description: Quality gates — verify, evidence, PASS/BLOCKED/NOT RUN; glob kích hoạt khi đụng test docs, source phổ biến hoặc CI.
 globs: "**/docs/testing/**,**/*.ts,**/*.tsx,**/*.js,**/*.jsx,**/*.vue,**/*.svelte,**/*.py,**/tests/**,**/test/**,**/__tests__/**,**/*.test.ts,**/*.test.tsx,**/*.test.js,**/*.spec.ts,**/*.spec.tsx,**/*.spec.js,**/e2e/**,**/.github/workflows/**"
 alwaysApply: false
 ---
 
 # Quality Gates
 
-Rule 10 định nghĩa **khi nào** phải quality-gate (done/ship/merge/…). File này + skill `quality-gate` định nghĩa **cách** kiểm tra.
+Rule 10 định nghĩa **khi nào** quality-gate. File này + skill `quality-gate` định nghĩa **cách** kiểm tra trong **application repository**.
 
 ## Trạng thái kiểm tra
 
@@ -28,13 +28,13 @@ Không chạy full checklist cho thay đổi không liên quan (vd. chỉ doc �
 
 ## Release / refactor lớn
 
-- Critical paths (product doc hoặc user).
+- Critical paths (`docs/product/` hoặc user).
 - CHANGELOG khi policy/user yêu cầu.
-
-## Portfolio meta repo
-
-- Doc/skill/rule: link chéo, không broken reference; không secret trong commit.
 
 ## Glob (kích hoạt rule)
 
-Áp dụng khi làm việc với: test docs, TS/JS, Vue/Svelte, Python, thư mục test phổ biến, e2e, GitHub Actions workflows. Framework/stack khác → bổ sung trong `99-project-local.mdc` nếu cần gate trên file type đó.
+Test docs, TS/JS, Vue/Svelte, Python, thư mục test, e2e, GitHub Actions. Stack khác → `99-project-local.mdc`.
+
+## Portfolio meta repository
+
+Kiểm tra doc/rule portfolio (link chéo, secrets): rule **`90-portfolio-meta-local.mdc`** — **không** áp dụng trong application repos.

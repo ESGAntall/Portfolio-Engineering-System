@@ -1,0 +1,28 @@
+---
+description: Chỉ portfolio meta repo — registry, ADR gốc, design-system skill, quality-gate meta. Không phân phối cho application repos.
+alwaysApply: false
+---
+# Portfolio meta (local only)
+
+Rule này **chỉ** áp dụng khi workspace là **portfolio-engineering-system**. Application repos dùng rules 00–30 + `docs/reference/` — **không** copy rule 90.
+
+## Tài liệu meta
+
+- Registry: `portfolio/portfolio-registry.md`
+- Chuẩn: `portfolio/engineering-standards.md`, `portfolio/design-principles.md`
+- ADR gốc: `docs/decisions/O-001`, `O-002`, `O-003`
+- Project specs: `portfolio/project-specs/<id>/`
+- Local app clones: `projects/<id>/` (gitignored)
+
+## Skills chỉ meta
+
+- `portfolio-design-system` — **không** phân phối cho child projects (D-02).
+- Khi sửa `portfolio/design-principles.md` → đồng bộ snapshot `docs/reference/design-principles.md` (CLI copy sang app khi `create`).
+
+## Quality gate (meta)
+
+Khi báo done cho thay đổi rule/skill/doc portfolio: link chéo đúng, không broken reference, không secret trong diff.
+
+## Bootstrap O-001
+
+Copy rules/skills = canonical `.cursor/`; reference policy = canonical `docs/reference/`; scaffold `project-template/docs/reference/project-context.md`. Local CLI thực thi COPY — không đổi quyết định ADR O-001.

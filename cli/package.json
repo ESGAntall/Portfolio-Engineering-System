@@ -1,0 +1,13 @@
+{
+  "name": "portfolio-local-cli",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Local CLI for Portfolio Engineering System (not published to npm)",
+  "type": "module",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "test": "node test/run-tests.js"
+  }
+}

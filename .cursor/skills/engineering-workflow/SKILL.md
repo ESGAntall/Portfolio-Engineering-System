@@ -50,7 +50,7 @@ Triển khai thay đổi theo **slice reviewable**, khớp convention repo và q
 
 | Tình huống | Skill |
 |------------|-------|
-| Slice đụng UI system | `frontend-design`, `portfolio-design-system` |
+| Slice đụng UI system | `frontend-design` |
 | Sau refactor rộng | `codebase-graph` refresh |
 | Trước merge/ship | `quality-gate` |
 | Scope creep | quay lại `requirement-orchestrator` |

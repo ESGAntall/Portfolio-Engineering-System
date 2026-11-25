@@ -1,11 +1,11 @@
 ---
-description: Hybrid workflow — task nhỏ/lớn theo risk & impact (ADR O-003); task lớn cần plan và approval; báo done/ship → quality-gate.
+description: Hybrid workflow — task nhỏ/lớn theo risk & impact; task lớn cần plan và approval; báo done/ship → quality-gate.
 alwaysApply: true
 ---
 
 # Workflow và phê duyệt
 
-Chi tiết: `docs/decisions/O-003-task-classification.md`.
+Chi tiết: `docs/reference/O-003-task-classification.md`.
 
 ## Task nhỏ (tất cả điều sau)
 
@@ -50,7 +50,7 @@ Thêm field kiểu `updatedAt`, `createdAt`, `status`, `lastViewedAt` → xác �
 
 ## Báo cáo hoàn thành (trigger)
 
-Khi user nói **done / ship / merge / release / hoàn thành (tính năng) / báo cáo kết quả implementation** → thực hiện hoặc route skill **`quality-gate`** (phạm vi theo task nhỏ/lớn; checklist chi tiết: rule `30-quality-gates.mdc` + skill).
+Khi user nói **done / ship / merge / release / hoàn thành (tính năng) / báo cáo kết quả implementation** → thực hiện hoặc route skill **`quality-gate`** (phạm vi theo task nhỏ/lớn; checklist: rule `30-quality-gates.mdc` + skill).
 
 ## Điểm vào điều phối
 
