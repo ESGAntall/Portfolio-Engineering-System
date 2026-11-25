@@ -12,14 +12,14 @@ Danh sách ứng dụng độc lập thuộc portfolio. **Cập nhật thủ cô
 
 | ID | Tên | Loại | Repository | Stack (project-specific) | Trạng thái | Mô tả ngắn |
 |----|-----|------|------------|--------------------------|------------|------------|
-| noteai | NOTEAI | Productivity / AI-powered note-taking (web) | [github.com/ESGAntall/noteai](https://github.com/ESGAntall/noteai) | Frontend-only; `localStorage` (framework TBD) — **chỉ NOTEAI** | **PLANNED** | Web client-side note-taking; prototype gốc Google AI Studio. Scaffold chưa thực hiện. |
+| noteai | NOTEAI | Productivity / AI-powered note-taking (web) | [github.com/ESGAntall/noteai](https://github.com/ESGAntall/noteai) | Client `localStorage`; Gemini qua Managed AI Runtime (key server-side); không app DB — **chỉ NOTEAI** | **PLANNED** (app scaffold); spec **DOCUMENTED** | Spec: [project-specs/noteai/](project-specs/noteai/README.md). Prototype Google AI Studio. |
 
 ## NOTEAI — specifications (**chỉ NOTEAI**)
 
-- Specs: [project-specs/noteai/README.md](project-specs/noteai/README.md) — architecture, product constraints, scaffold plan.
+- Specs: [project-specs/noteai/README.md](project-specs/noteai/README.md) — architecture, product requirements, data model, PPL, acceptance, scaffold plan.
 - Remote app: [github.com/ESGAntall/noteai](https://github.com/ESGAntall/noteai) (độc lập với portfolio Git).
-- Ràng buộc frontend-only / `localStorage` / không backend: **không** áp dụng cho project khác trừ khi có ADR riêng.
-- AI integration: **chưa quyết định** (NOTEAI).
+- Ràng buộc client `localStorage` + Managed AI Runtime (không app DB): **chỉ NOTEAI** — không áp dụng project khác trừ ADR riêng.
+- AI: Gemini qua Managed AI Runtime (key server-side); chi tiết [project-specs/noteai/architecture.md](project-specs/noteai/architecture.md).
 
 ## Quy ước
 

@@ -23,7 +23,7 @@ Chuẩn **workflow/rules/skills** (O-001–O-003) là portfolio-wide. **Stack, b
 - Mỗi project quyết định **độc lập** trong phân tích requirement/kiến trúc có cần backend hay không.
 - Nếu cần backend: chọn framework, database, auth, deploy, hạ tầng theo **requirement thực tế** của project đó (ADR trong repo app).
 - **Không** ép Node.js, Express, NestJS, hay database cụ thể lên mọi project.
-- **Không** suy rộng ràng buộc của **một** project (vd. NOTEAI frontend-only + `localStorage`) thành rule portfolio — chi tiết NOTEAI tại [project-specs/noteai/](project-specs/noteai/README.md).
+- **Không** suy rộng ràng buộc của **một** project (vd. NOTEAI: app data `localStorage` + Managed AI Runtime riêng cho Gemini) thành rule portfolio — chi tiết NOTEAI tại [project-specs/noteai/](project-specs/noteai/README.md).
 
 ## Technology strategy (directions, not mandates)
 

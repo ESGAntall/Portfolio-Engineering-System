@@ -2,23 +2,45 @@
 
 ## Product
 
-**NOTEAI** — Productivity / AI-powered note-taking **web application**.
+**NOTEAI** — Web app ghi chú, thư viện tài liệu, Knowledge Map, chat AI. Repo [ESGAntall/noteai](https://github.com/ESGAntall/noteai).
 
-Prototype gốc: Google AI Studio. Triển khai mục tiêu: web app trong repo [ESGAntall/noteai](https://github.com/ESGAntall/noteai).
+## Thuật ngữ
 
-## Feature inventory
+| Spec | UI (VI) |
+|------|---------|
+| Note | Ghi chú |
+| Knowledge | Tài liệu (nội dung thật) |
+| Node (MapNode) | Biểu diễn Tài liệu trên Bản đồ kiến thức |
+| Knowledge Map | Bản đồ kiến thức |
 
-- **Giữ nguyên** feature inventory đã xác nhận với user.
-- Đợt cập nhật meta này **không** thay đổi hoặc thêm feature.
-- Chi tiết inventory sẽ được mirror vào `docs/product/` trong repo ứng dụng khi scaffold (single source trong app repo sau bootstrap).
+**Knowledge** giữ nội dung; **Node** chỉ tham chiếu `knowledgeId` — [data-model.md](data-model.md).
 
-## Không giả định
+## Phạm vi
 
-- Frontend framework (React, Vue, Svelte, …).
-- Build tool (Vite, Webpack, …).
-- Hosting / CI (chưa ghi trong meta doc).
+Chi tiết: [product-requirements.md](product-requirements.md).
 
-## Portfolio rules
+## Ràng buộc không đổi
 
-- Redesign/refactor: bảo toàn tính năng (`00-portfolio-baseline`, `frontend-design`).
-- Task lớn / AI architecture undecided → `requirement-orchestrator` + ADR trong repo app khi có quyết định.
+- Không app DB / user account DB / cloud sync mặc định.
+- Không auth flows.
+- Không API key Gemini trên client.
+- Re-fill: **skip-existing** — không overwrite demo hay user.
+- Clear Demo: chỉ `is_demo: true`; không check-in.
+- Không seed check-in; demo activity được phép.
+- AI không đụng graph/links.
+- Không cạnh ngược tự động.
+
+## Chưa chọn (ADR)
+
+- Framework, build, hosting runtime.
+- Manifest deterministic demo IDs cụ thể.
+- Remove-from-map UI có/không.
+
+## Portfolio
+
+- Redesign: bảo parity spec (`frontend-design`).
+- ADR app cho runtime API, PPL numeric limits.
+
+## Acceptance
+
+[acceptance-criteria.md](acceptance-criteria.md)
